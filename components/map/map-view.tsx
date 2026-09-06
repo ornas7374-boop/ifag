@@ -39,7 +39,12 @@ export function MapView({
         {label ? (
           <p className="text-sm font-medium text-foreground">{label}</p>
         ) : null}
-        <p className="text-xs text-muted-foreground">
+        {/*
+          dir="ltr" ضروري هنا: زوج الإحداثيات أرقام لاتينية داخل نص عربي،
+          وبدون عزله يقلب محرّك الـ bidi ترتيبه بصريًا فيظهر
+          "خط الطول، خط العرض" — قيمة خاطئة تمامًا للقارئ.
+        */}
+        <p dir="ltr" className="text-xs text-muted-foreground">
           {center.lat.toFixed(4)}, {center.lng.toFixed(4)}
         </p>
         {!hasKey ? (
