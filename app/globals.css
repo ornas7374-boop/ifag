@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* الوضع الداكن باستراتيجية الـ class (نضعه على <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * قيم الألوان `-light` و `-dark` تُحقن من app/layout.tsx عبر inline style
+ * مأخوذة من config/brand.ts — لا تكتبها هنا حتى يبقى مصدر الحقيقة واحدًا.
+ * هنا فقط نقرر أيّ مجموعة تُستخدم في كل وضع.
+ */
+:root {
+  --brand-background: var(--brand-background-light);
+  --brand-foreground: var(--brand-foreground-light);
+  --brand-card: var(--brand-card-light);
+  --brand-card-foreground: var(--brand-card-foreground-light);
+  --brand-popover: var(--brand-popover-light);
+  --brand-popover-foreground: var(--brand-popover-foreground-light);
+  --brand-primary: var(--brand-primary-light);
+  --brand-primary-foreground: var(--brand-primary-foreground-light);
+  --brand-secondary: var(--brand-secondary-light);
+  --brand-secondary-foreground: var(--brand-secondary-foreground-light);
+  --brand-muted: var(--brand-muted-light);
+  --brand-muted-foreground: var(--brand-muted-foreground-light);
+  --brand-accent: var(--brand-accent-light);
+  --brand-accent-foreground: var(--brand-accent-foreground-light);
+  --brand-destructive: var(--brand-destructive-light);
+  --brand-destructive-foreground: var(--brand-destructive-foreground-light);
+  --brand-success: var(--brand-success-light);
+  --brand-success-foreground: var(--brand-success-foreground-light);
+  --brand-warning: var(--brand-warning-light);
+  --brand-warning-foreground: var(--brand-warning-foreground-light);
+  --brand-border: var(--brand-border-light);
+  --brand-input: var(--brand-input-light);
+  --brand-ring: var(--brand-ring-light);
+
+  color-scheme: light;
+}
+
+.dark {
+  --brand-background: var(--brand-background-dark);
+  --brand-foreground: var(--brand-foreground-dark);
+  --brand-card: var(--brand-card-dark);
+  --brand-card-foreground: var(--brand-card-foreground-dark);
+  --brand-popover: var(--brand-popover-dark);
+  --brand-popover-foreground: var(--brand-popover-foreground-dark);
+  --brand-primary: var(--brand-primary-dark);
+  --brand-primary-foreground: var(--brand-primary-foreground-dark);
+  --brand-secondary: var(--brand-secondary-dark);
+  --brand-secondary-foreground: var(--brand-secondary-foreground-dark);
+  --brand-muted: var(--brand-muted-dark);
+  --brand-muted-foreground: var(--brand-muted-foreground-dark);
+  --brand-accent: var(--brand-accent-dark);
+  --brand-accent-foreground: var(--brand-accent-foreground-dark);
+  --brand-destructive: var(--brand-destructive-dark);
+  --brand-destructive-foreground: var(--brand-destructive-foreground-dark);
+  --brand-success: var(--brand-success-dark);
+  --brand-success-foreground: var(--brand-success-foreground-dark);
+  --brand-warning: var(--brand-warning-dark);
+  --brand-warning-foreground: var(--brand-warning-foreground-dark);
+  --brand-border: var(--brand-border-dark);
+  --brand-input: var(--brand-input-dark);
+  --brand-ring: var(--brand-ring-dark);
+
+  color-scheme: dark;
+}
+
+/*
+ * `inline` إلزامية هنا.
+ * بدونها يحسب Tailwind قيمة كل token وقت البناء ويتجاهل متغيّرات CSS،
+ * فيبدو تبديل الثيم وقت التشغيل وكأنه نجح بينما لا يتغيّر شيء فعليًا.
+ */
+@theme inline {
+  --color-background: var(--brand-background);
+  --color-foreground: var(--brand-foreground);
+  --color-card: var(--brand-card);
+  --color-card-foreground: var(--brand-card-foreground);
+  --color-popover: var(--brand-popover);
+  --color-popover-foreground: var(--brand-popover-foreground);
+  --color-primary: var(--brand-primary);
+  --color-primary-foreground: var(--brand-primary-foreground);
+  --color-secondary: var(--brand-secondary);
+  --color-secondary-foreground: var(--brand-secondary-foreground);
+  --color-muted: var(--brand-muted);
+  --color-muted-foreground: var(--brand-muted-foreground);
+  --color-accent: var(--brand-accent);
+  --color-accent-foreground: var(--brand-accent-foreground);
+  --color-destructive: var(--brand-destructive);
+  --color-destructive-foreground: var(--brand-destructive-foreground);
+  --color-success: var(--brand-success);
+  --color-success-foreground: var(--brand-success-foreground);
+  --color-warning: var(--brand-warning);
+  --color-warning-foreground: var(--brand-warning-foreground);
+  --color-border: var(--brand-border);
+  --color-input: var(--brand-input);
+  --color-ring: var(--brand-ring);
+
+  --font-sans: var(--brand-font-sans);
+
+  --radius-sm: calc(var(--brand-radius) - 6px);
+  --radius-md: calc(var(--brand-radius) - 3px);
+  --radius-lg: var(--brand-radius);
+  --radius-xl: calc(var(--brand-radius) + 6px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    /* العربية تحتاج ارتفاع سطر أعلى من اللاتينية بنفس الحجم */
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* حلقة تركيز ظاهرة دائمًا — شرط الوصولية بلوحة المفاتيح */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  /* الحقول اللاتينية (هاتف، بريد، آيبان) تبقى LTR داخل واجهة RTL */
+  input[dir="ltr"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="url"] {
+    direction: ltr;
+    text-align: start;
+  }
+
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
