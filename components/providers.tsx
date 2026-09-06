@@ -2,6 +2,7 @@
 
 import { DirectionProvider } from "@radix-ui/react-direction";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CartProvider } from "@/lib/cart/cart-context";
 
 /**
  * DirectionProvider ليس اختياريًا في واجهة RTL.
@@ -14,7 +15,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <DirectionProvider dir="rtl">
-      <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+      <TooltipProvider delayDuration={200}>
+        <CartProvider>{children}</CartProvider>
+      </TooltipProvider>
     </DirectionProvider>
   );
 }

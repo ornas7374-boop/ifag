@@ -4,7 +4,7 @@ import { Clock, Heart, MessageCircle, Users } from "lucide-react";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { MapView } from "@/components/map/map-view";
-import { PriceBreakdown } from "@/components/domain/price-breakdown";
+import { BookingWidget } from "@/components/booking/booking-widget";
 import { RatingStars } from "@/components/domain/rating-stars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,7 @@ import {
   listReviews,
 } from "@/lib/data";
 import { priceUnitLabel } from "@/lib/adapters";
-import {
-  buildQuote,
-  DEFAULT_COMMISSION_RATE,
-  placeRate,
-} from "@/lib/pricing";
+import { placeRate } from "@/lib/pricing";
 import { halalas } from "@/lib/money";
 
 export async function generateMetadata({
@@ -52,12 +48,6 @@ export default async function PlacePage({
   ]);
 
   const nightly = placeRate(place, "night") ?? halalas(0);
-
-  // معاينة سعر لليلة واحدة. الحساب النهائي يتم في الخادم عند الحجز.
-  const quote = buildQuote({
-    lines: [{ label: `${ar.booking.nightly} × 1`, amount: nightly }],
-    commissionRate: DEFAULT_COMMISSION_RATE,
-  });
 
   return (
     <PageShell>
@@ -242,11 +232,17 @@ export default async function PlacePage({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <PriceBreakdown quote={quote} />
-
-              <Button size="lg" className="w-full">
-                {ar.common.bookNow}
-              </Button>
+              <BookingWidget
+                addons={addons}
+                rates={{
+                  price_per_hour: place.price_per_hour,
+                  price_per_day: place.price_per_day,
+                  price_per_night: place.price_per_night,
+                }}
+                capacityMin={place.capacity_min}
+                capacityMax={place.capacity_max}
+                checkInTime={place.check_in_time}
+              />
 
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1">
@@ -257,10 +253,6 @@ export default async function PlacePage({
                   <Heart aria-hidden />
                 </Button>
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                {ar.states.phasePlaceholder}
-              </p>
             </CardContent>
           </Card>
         </aside>

@@ -4,6 +4,7 @@ import { Heart, MapPin, Truck, Wrench } from "lucide-react";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { PriceBreakdown } from "@/components/domain/price-breakdown";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { RatingStars } from "@/components/domain/rating-stars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -190,9 +191,24 @@ export default async function ServicePage({
             <CardContent className="space-y-4">
               <PriceBreakdown quote={quote} />
 
-              <Button size="lg" className="w-full">
-                {ar.common.addToCart}
-              </Button>
+              <AddToCartButton
+                item={{
+                  serviceId: service.id,
+                  slug: service.slug,
+                  title_ar: service.title_ar,
+                  imageUrl: service.cover_image_url,
+                  hostId: service.host_id,
+                  unitPrice: service.price,
+                  pricingMode: service.pricing_mode,
+                  unitLabel: service.unit_label_ar,
+                  minQuantity: service.min_quantity,
+                  maxQuantity: service.max_quantity,
+                  requiresDelivery: service.requires_delivery,
+                  deliveryStrategy: service.delivery_strategy,
+                  deliveryFee: service.delivery_fee,
+                  freeDeliveryOver: service.free_delivery_over,
+                }}
+              />
 
               <Button
                 variant="outline"
@@ -202,10 +218,6 @@ export default async function ServicePage({
                 <Heart aria-hidden />
                 {ar.common.addToFavorites}
               </Button>
-
-              <p className="text-xs text-muted-foreground">
-                {ar.states.phasePlaceholder}
-              </p>
             </CardContent>
           </Card>
         </aside>

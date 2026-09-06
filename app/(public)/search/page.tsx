@@ -2,13 +2,20 @@ import { Suspense } from "react";
 
 import { PageShell, PageHeader } from "@/components/layout/page-shell";
 import { SearchBar } from "@/components/domain/search-bar";
+import { FilterSheet, FilterSidebar } from "@/components/domain/filter-panel";
 import { ListingGrid } from "@/components/domain/listing-card";
 import { ListingGridSkeleton } from "@/components/states/listing-card-skeleton";
 import { EmptyState } from "@/components/states/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ar } from "@/content/ar";
 import { formatNumber } from "@/lib/format";
-import { listCities, listPlaces, listServices, type ListingFilters } from "@/lib/data";
+import {
+  listAmenities,
+  listCities,
+  listPlaces,
+  listServices,
+  type ListingFilters,
+} from "@/lib/data";
 import { placeToCard, serviceToCard } from "@/lib/adapters";
 
 export const metadata = { title: ar.search.title };
@@ -29,12 +36,17 @@ async function buildFilters(params: SearchParams): Promise<ListingFilters> {
   const minPrice = first(params.minPrice);
   const maxPrice = first(params.maxPrice);
 
+  const minRating = first(params.minRating);
+  const amenityIds = first(params.amenities)?.split(",").filter(Boolean);
+
   return {
     cityId: city?.id,
     query: first(params.q) || undefined,
     sort: sort ?? "recommended",
     minPrice: minPrice ? Number(minPrice) : undefined,
     maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    minRating: minRating ? Number(minRating) : undefined,
+    amenityIds: amenityIds?.length ? amenityIds : undefined,
   };
 }
 
@@ -81,6 +93,7 @@ export default async function SearchPage({
 }) {
   const params = await searchParams;
   const kind = first(params.kind) ?? "place";
+  const amenities = await listAmenities();
 
   return (
     <PageShell>
@@ -101,9 +114,16 @@ export default async function SearchPage({
         </TabsList>
       </Tabs>
 
-      <Suspense fallback={<ListingGridSkeleton />}>
-        <Results params={params} />
-      </Suspense>
+      <div className="flex gap-6">
+        <FilterSidebar amenities={amenities} />
+
+        <div className="min-w-0 flex-1 space-y-4">
+          <FilterSheet amenities={amenities} />
+          <Suspense fallback={<ListingGridSkeleton />}>
+            <Results params={params} />
+          </Suspense>
+        </div>
+      </div>
     </PageShell>
   );
 }

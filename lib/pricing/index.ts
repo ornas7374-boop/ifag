@@ -47,24 +47,36 @@ export const defaultPricingContext: PricingContext = {
   distanceKm: 0,
 };
 
-/** كم "وحدة" يُضرب فيها السعر حسب طريقة التسعير. */
+/**
+ * كم "وحدة" يُضرب فيها السعر حسب طريقة التسعير.
+ *
+ * ★ الكمية بُعد مستقل عن الزمن ★
+ * صبّابان لأربع ساعات = السعر × 4 ساعات × 2 صبّاب، لا × 4 فقط.
+ * إهمال الكمية هنا يعني تحصيل أجر عامل واحد مهما طلب العميل.
+ *
+ * الاستثناء الوحيد `fixed`: سعر مقطوع لا يتأثر بشيء — وهذا معنى الاسم.
+ * و`per_unit` كميته هي مضاعِفه أصلًا، فلا تُضرب مرتين.
+ */
 function multiplierFor(mode: PricingMode, ctx: PricingContext): number {
+  const quantity = Math.max(1, ctx.quantity);
+
   switch (mode) {
     case "fixed":
-    case "per_booking":
       return 1;
+    case "per_booking":
+      return quantity;
     case "per_hour":
-      return Math.max(1, ctx.hours);
+      return Math.max(1, ctx.hours) * quantity;
     case "per_day":
-      return Math.max(1, ctx.days);
+      return Math.max(1, ctx.days) * quantity;
     case "per_night":
-      return Math.max(1, ctx.nights);
+      return Math.max(1, ctx.nights) * quantity;
     case "per_person":
-      return Math.max(1, ctx.persons);
+      return Math.max(1, ctx.persons) * quantity;
     case "per_unit":
-      return Math.max(1, ctx.quantity);
+      return quantity;
     case "per_km":
-      return Math.max(0, ctx.distanceKm);
+      return Math.max(0, ctx.distanceKm) * quantity;
   }
 }
 

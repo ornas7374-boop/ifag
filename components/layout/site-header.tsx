@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ShoppingCart, User } from "lucide-react";
+import { User } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
+import { CartButton } from "@/components/cart/cart-button";
 import { ar } from "@/content/ar";
 
 const links = [
@@ -30,11 +31,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="ms-auto flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/cart" aria-label={ar.nav.cart}>
-              <ShoppingCart aria-hidden />
-            </Link>
-          </Button>
+          <CartButton />
           <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
             <Link href="/login">
               <User aria-hidden />
