@@ -48,13 +48,19 @@ export function BookingTimeline({ booking, className }: Props) {
   const releasedEarly = blockEnd < end;
   const extendedForCleanup = blockEnd > end;
 
+  /*
+   * الشريطان يستخدمان درجتَي المخططات المُتحقَّق منهما آليًا، لا ألوان
+   * الواجهة. السبب عملي: primary و success أخضران متقاربان، ووضعهما فوق
+   * بعضهما يُلغي الغرض من عرض النافذتين جنبًا إلى جنب — وهو إبراز الفرق
+   * بينهما. الدرجتان أدناه اجتازتا فحص فصل العمى اللوني.
+   */
   const bars = [
     {
       key: "contracted",
       label: ar.booking.contractedWindow,
       from: start,
       to: end,
-      className: "bg-primary",
+      color: "var(--color-chart-1)",
       note: "أساس التسعير — لا تتغيّر",
     },
     {
@@ -62,7 +68,7 @@ export function BookingTimeline({ booking, className }: Props) {
       label: "نافذة الحجب في التقويم",
       from: blockStart,
       to: blockEnd,
-      className: releasedEarly ? "bg-success" : "bg-accent",
+      color: "var(--color-chart-2)",
       note: releasedEarly
         ? "تحرّر المكان مبكرًا"
         : extendedForCleanup
@@ -89,13 +95,11 @@ export function BookingTimeline({ booking, className }: Props) {
                 فينعكس تلقائيًا مع اتجاه الصفحة دون حساب يدوي */}
             <div className="relative h-8 w-full rounded-md bg-muted">
               <div
-                className={cn(
-                  "absolute inset-y-0 rounded-md",
-                  bar.className,
-                )}
+                className="absolute inset-y-0 rounded-md"
                 style={{
                   insetInlineStart: `${pct(bar.from)}%`,
                   width: `${pct(bar.to) - pct(bar.from)}%`,
+                  backgroundColor: bar.color,
                 }}
               />
               <span className="absolute inset-y-0 flex items-center px-2 text-xs font-medium text-foreground"
