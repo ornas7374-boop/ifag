@@ -28,7 +28,6 @@ export function priceUnitLabel(unit: PricingMode | RateUnit): string {
 const PLACE_KIND_LABEL: Record<Place["place_kind"], string> = {
   kashta: "كشتة",
   camp: "مخيم",
-  chalet: "شاليه",
   wild: "مكان بري",
 };
 

@@ -11,20 +11,23 @@
 -- ── بيانات تحضيرية ──
 insert into auth.users (id) values
   ('11111111-1111-1111-1111-111111111111'),
-  ('22222222-2222-2222-2222-222222222222');
+  ('22222222-2222-2222-2222-222222222222')
+on conflict (id) do nothing;
 
 insert into profiles (id, role, full_name) values
   ('11111111-1111-1111-1111-111111111111', 'host',     'مضيف'),
-  ('22222222-2222-2222-2222-222222222222', 'customer', 'عميل');
+  ('22222222-2222-2222-2222-222222222222', 'customer', 'عميل')
+on conflict (id) do nothing;
 
 insert into cities (id, slug, name_ar)
-values ('33333333-3333-3333-3333-333333333333', 'riyadh', 'الرياض');
+values ('33333333-3333-3333-3333-333333333333', '__test-city', 'مدينة اختبار')
+on conflict (slug) do nothing;
 
 insert into places (
   id, slug, host_id, title_ar, place_kind, status, city_id,
   latitude, longitude, price_per_night, turnaround_minutes
 ) values (
-  '44444444-4444-4444-4444-444444444444', 'test-place',
+  '44444444-4444-4444-4444-444444444444', '__test-place',
   '11111111-1111-1111-1111-111111111111', 'مكان اختبار', 'kashta', 'published',
   '33333333-3333-3333-3333-333333333333', 24.7, 46.7, 100000, 0
 );
@@ -173,3 +176,15 @@ values ('22222222-2222-2222-2222-222222222222',
         '44444444-4444-4444-4444-444444444444');
 \echo '^^ متوقع: خطأ 23514 (check violation) = PASS'
 rollback;
+
+-- ── تنظيف: يجعل الاختبار قابلًا لإعادة التشغيل على نفس القاعدة ──
+delete from bookings where place_id = '44444444-4444-4444-4444-444444444444';
+delete from favorites where user_id = '22222222-2222-2222-2222-222222222222';
+delete from places   where id = '44444444-4444-4444-4444-444444444444';
+delete from cities   where id = '33333333-3333-3333-3333-333333333333';
+delete from profiles where id in (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222');
+delete from auth.users where id in (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222');

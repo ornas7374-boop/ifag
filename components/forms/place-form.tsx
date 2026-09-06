@@ -23,7 +23,6 @@ import type { Amenity, City, PlaceKind } from "@/types/domain";
 const PLACE_KINDS: { value: PlaceKind; label: string }[] = [
   { value: "kashta", label: "كشتة" },
   { value: "camp", label: "مخيم" },
-  { value: "chalet", label: "شاليه" },
   { value: "wild", label: "مكان بري" },
 ];
 

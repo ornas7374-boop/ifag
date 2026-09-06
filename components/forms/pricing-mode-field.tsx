@@ -35,7 +35,7 @@ export const PRICING_MODES: ModeSpec[] = [
   { value: "per_booking", label: "لكل حجز", hint: "مبلغ واحد للطلب مهما طالت مدته.", example: "خيمة مجهّزة 500 ر.س للحجز" },
   { value: "per_hour", label: "بالساعة", hint: "يُضرب في عدد الساعات وفي الكمية.", example: "صبّاب 200 ر.س/ساعة" },
   { value: "per_day", label: "باليوم", hint: "يُضرب في عدد الأيام وفي الكمية.", example: "مكيّف 120 ر.س/يوم" },
-  { value: "per_night", label: "بالليلة", hint: "يُضرب في عدد الليالي وفي الكمية.", example: "شاليه 900 ر.س/ليلة" },
+  { value: "per_night", label: "بالليلة", hint: "يُضرب في عدد الليالي وفي الكمية.", example: "مخيم 900 ر.س/ليلة" },
   { value: "per_person", label: "للشخص", hint: "يُضرب في عدد الأشخاص.", example: "ضيافة 25 ر.س للشخص" },
   { value: "per_unit", label: "للقطعة", hint: "يُضرب في الكمية المطلوبة فقط.", example: "طقم طاولة 150 ر.س" },
   { value: "per_km", label: "حسب المسافة", hint: "يُضرب في المسافة بالكيلومترات.", example: "نقل 5 ر.س/كم" },

@@ -75,8 +75,8 @@ export const bookings: Booking[] = [
   {
     id: "b-3",
     reference: "KSH-23990",
-    place_id: "p-3",
-    place_title_ar: "شاليه الواحة",
+    place_id: "p-4",
+    place_title_ar: "بر السودة المطل",
     customer_id: "u-cust-1",
     host_id: "u-host-2",
     status: "completed",

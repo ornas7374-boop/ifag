@@ -26,7 +26,7 @@ export const profiles: Profile[] = [
 export const notifications: NotificationItem[] = [
   { id: "n-1", user_id: "u-cust-1", title_ar: "تم تأكيد حجزك", body_ar: "كشتة الرمال الذهبية — بعد 6 أيام.", link: "/account/bookings", is_read: false, created_at: ago(0.2) },
   { id: "n-2", user_id: "u-cust-1", title_ar: "طلبك خرج للتوصيل", body_ar: "خيمة مجهّزة + طاولات في الطريق إليك.", link: "/account/orders", is_read: false, created_at: ago(1) },
-  { id: "n-3", user_id: "u-cust-1", title_ar: "قيّم تجربتك", body_ar: "شاركنا رأيك في شاليه الواحة.", link: "/account/reviews", is_read: true, created_at: ago(18) },
+  { id: "n-3", user_id: "u-cust-1", title_ar: "قيّم تجربتك", body_ar: "شاركنا رأيك في بر السودة المطل.", link: "/account/reviews", is_read: true, created_at: ago(18) },
 ];
 
 export const payments: PaymentRecord[] = [

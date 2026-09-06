@@ -22,7 +22,6 @@ on conflict (slug) do nothing;
 insert into categories (slug, name_ar, icon, sort_order) values
   ('kashta',       'كشتات',         'flame',     1),
   ('camp',         'مخيمات',        'tent',      2),
-  ('chalet',       'شاليهات',       'home',      3),
   ('wild',         'أماكن برية',    'mountain',  4),
   ('tents',        'خيام',          'tent-tree', 5),
   ('majlis',       'جلسات',         'armchair',  6),

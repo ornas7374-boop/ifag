@@ -1276,7 +1276,7 @@ export interface Database {
     Enums: {
       user_role: "customer" | "host" | "admin";
       listing_status: "draft" | "pending" | "published" | "rejected" | "suspended";
-      place_kind: "kashta" | "camp" | "chalet" | "wild";
+      place_kind: "kashta" | "camp" | "wild";
       service_kind: "setup" | "product" | "labor";
       rate_unit: "hour" | "day" | "night";
       pricing_mode: "fixed" | "per_booking" | "per_hour" | "per_day" | "per_night" | "per_person" | "per_unit" | "per_km";

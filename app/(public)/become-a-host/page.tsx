@@ -45,7 +45,7 @@ export default async function Page() {
           أضف مكانك أو خدمتك إلى {brand.appName}
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-8 text-muted-foreground">
-          سواء كنت تملك كشتة أو مخيمًا أو شاليهًا، أو تقدّم خدمات تجهيز
+          سواء كنت تملك كشتة أو مخيمًا أو موقعًا بريًا، أو تقدّم خدمات تجهيز
           ومعدات وعمالة — تصلك الحجوزات والطلبات في مكان واحد.
         </p>
         <div className="flex flex-wrap justify-center gap-3">

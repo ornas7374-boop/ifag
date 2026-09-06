@@ -57,7 +57,7 @@ export type DeliveryFeeStrategy =
 /** أنواع الخدمات — قابلة للتوسعة بإضافة قيمة واحدة هنا وفي الـ enum بالـ SQL. */
 export type ServiceKind = "setup" | "product" | "labor";
 
-export type PlaceKind = "kashta" | "camp" | "chalet" | "wild";
+export type PlaceKind = "kashta" | "camp" | "wild";
 
 export interface City {
   id: string;

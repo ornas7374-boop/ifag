@@ -11,7 +11,7 @@ create type listing_status as enum (
   'draft', 'pending', 'published', 'rejected', 'suspended'
 );
 
-create type place_kind   as enum ('kashta', 'camp', 'chalet', 'wild');
+create type place_kind   as enum ('kashta', 'camp', 'wild');
 create type service_kind as enum ('setup', 'product', 'labor');
 
 -- وحدة الحجز للأماكن

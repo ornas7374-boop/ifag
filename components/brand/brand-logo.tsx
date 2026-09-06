@@ -27,7 +27,9 @@ export async function BrandLogo({
         alt={brand.appName}
         width={36}
         height={36}
-        className="h-9 w-9"
+        // الصورة مربعة بخلفية كريمية والتصميم دائري،
+        // فالقناع الدائري يقصّ الزوايا ويجعل الشكل مقصودًا
+        className="h-9 w-9 rounded-full"
         priority
       />
       {showName ? (
