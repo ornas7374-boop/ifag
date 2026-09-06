@@ -1,11 +1,12 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Clock, Heart, MessageCircle, Users } from "lucide-react";
+import { Clock, MessageCircle, Users } from "lucide-react";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { MapView } from "@/components/map/map-view";
 import { BookingWidget } from "@/components/booking/booking-widget";
 import { RatingStars } from "@/components/domain/rating-stars";
+import { FavoriteButton } from "@/components/domain/favorite-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -249,9 +250,7 @@ export default async function PlacePage({
                   <MessageCircle aria-hidden />
                   {ar.common.contactHost}
                 </Button>
-                <Button variant="outline" size="icon" aria-label={ar.common.addToFavorites}>
-                  <Heart aria-hidden />
-                </Button>
+<FavoriteButton kind="place" id={place.id} />
               </div>
             </CardContent>
           </Card>

@@ -1,8 +1,11 @@
 import type {
   Addon,
   Amenity,
+  Booking,
+  CalendarEntry,
   Category,
   City,
+  Order,
   Place,
   Review,
   Service,
@@ -50,4 +53,24 @@ export interface DataRepository {
   getServiceBySlug(slug: string): Promise<Service | null>;
   listAddonsForPlace(placeId: string): Promise<Addon[]>;
   listReviews(target?: ReviewTarget): Promise<Review[]>;
+
+  listBookings(scope: BookingScope): Promise<Booking[]>;
+  getBooking(id: string): Promise<Booking | null>;
+  listOrders(scope: OrderScope): Promise<Order[]>;
+  getOrder(id: string): Promise<Order | null>;
+  listCalendar(hostId: string): Promise<CalendarEntry[]>;
+}
+
+export interface BookingScope {
+  /** "customer" لحجوزاتي، و"host" لحجوزات أماكني. */
+  as: "customer" | "host";
+  /** upcoming = القادمة فقط، past = المنتهية، all = الكل. */
+  when?: "upcoming" | "past" | "all";
+  /** يستبعد صفوف الحجب الإداري من عرض العميل. */
+  includeBlocks?: boolean;
+}
+
+export interface OrderScope {
+  as: "customer" | "host";
+  status?: string;
 }

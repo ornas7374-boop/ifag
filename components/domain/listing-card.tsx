@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/domain/rating-stars";
-import { ar } from "@/content/ar";
+import { FavoriteButton } from "@/components/domain/favorite-button";
 import { formatSAR } from "@/lib/format";
 import { priceUnitLabel } from "@/lib/adapters";
 import { cn } from "@/lib/utils";
@@ -38,13 +38,11 @@ export function ListingCard({
         />
 
         {/* start-3 منطقي: يمين في RTL، يسار في LTR — لا تستخدم left/right */}
-        <button
-          type="button"
-          aria-label={ar.common.addToFavorites}
-          className="absolute end-3 top-3 grid size-9 cursor-pointer place-items-center rounded-full bg-card/90 text-foreground backdrop-blur transition-colors hover:text-destructive"
-        >
-          <Heart className="size-4" aria-hidden />
-        </button>
+        <FavoriteButton
+          kind={item.href.startsWith("/services/") ? "service" : "place"}
+          id={item.id}
+          className="absolute end-3 top-3 z-10"
+        />
 
         {item.badges.length > 0 ? (
           <div className="absolute start-3 top-3 flex flex-wrap gap-1.5">

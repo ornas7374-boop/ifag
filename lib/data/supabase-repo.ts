@@ -349,3 +349,149 @@ export async function checkPlaceAvailability(
   if (error) throw error;
   return data ?? false;
 }
+
+// ── الحجوزات والطلبات ──
+
+import type { Booking, CalendarEntry, Order } from "@/types/domain";
+import type { BookingScope, OrderScope } from "@/lib/data/contracts";
+
+/**
+ * RLS تتكفّل بالنطاق: العميل يرى حجوزاته، وصاحب المكان يرى حجوزات
+ * أماكنه. لا نمرّر معرّف المستخدم في الاستعلام لأن السياسة تقرأه من
+ * الجلسة — تمريره يدويًا يفتح باب الخطأ.
+ */
+function toBooking(
+  row: Tables<"bookings"> & { places?: { title_ar: string } | null },
+): Booking {
+  return {
+    id: row.id,
+    reference: row.reference,
+    place_id: row.place_id,
+    place_title_ar: row.places?.title_ar ?? "",
+    customer_id: row.customer_id ?? "",
+    host_id: row.host_id,
+    status: row.status,
+    payment_status: row.payment_status,
+    rate_unit: row.rate_unit,
+    booking_start: row.booking_start,
+    booking_end: row.booking_end,
+    preparation_start: row.preparation_start,
+    actual_check_in: row.actual_check_in,
+    actual_check_out: row.actual_check_out,
+    available_again_at: row.available_again_at,
+    guests: row.guests,
+    base_amount: halalas(row.base_amount),
+    addons_amount: halalas(row.addons_amount),
+    discount_amount: halalas(row.discount_amount),
+    commission_amount: halalas(row.commission_amount),
+    total_amount: halalas(row.total_amount),
+    created_at: row.created_at,
+  };
+}
+
+export async function listBookings(scope: BookingScope): Promise<Booking[]> {
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  let query = supabase
+    .from("bookings")
+    .select("*, places(title_ar)")
+    .order("booking_start", { ascending: false });
+
+  if (!scope.includeBlocks) query = query.eq("source", "customer");
+
+  if (scope.when === "upcoming") {
+    query = query
+      .gte("booking_end", nowIso)
+      .in("status", ["pending", "confirmed", "checked_in"]);
+  } else if (scope.when === "past") {
+    query = query.or(
+      `booking_end.lt.${nowIso},status.in.(completed,cancelled)`,
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map(toBooking);
+}
+
+export async function getBooking(id: string): Promise<Booking | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*, places(title_ar)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toBooking(data) : null;
+}
+
+export async function listOrders(scope: OrderScope): Promise<Order[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .order("created_at", { ascending: false });
+  if (scope.status) {
+    query = query.eq("status", scope.status as Tables<"orders">["status"]);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    reference: row.reference,
+    customer_id: row.customer_id,
+    host_id: row.host_id,
+    status: row.status,
+    payment_status: row.payment_status,
+    items: (row.order_items ?? []).map((i) => ({
+      id: i.id,
+      order_id: i.order_id,
+      service_id: i.service_id,
+      service_title_ar: i.title_ar,
+      quantity: i.quantity,
+      unit_price: halalas(i.unit_price),
+      line_total: halalas(i.line_total),
+      pricing_mode: i.pricing_mode,
+      service_at: i.service_at,
+    })),
+    delivery_address: null,
+    services_amount: halalas(row.services_amount),
+    delivery_fee: halalas(row.delivery_fee),
+    extra_fees: halalas(row.extra_fees),
+    discount_amount: halalas(row.discount_amount),
+    commission_amount: halalas(row.commission_amount),
+    total_amount: halalas(row.total_amount),
+    created_at: row.created_at,
+  }));
+}
+
+export async function getOrder(id: string): Promise<Order | null> {
+  const all = await listOrders({ as: "customer" });
+  return all.find((o) => o.id === id) ?? null;
+}
+
+export async function listCalendar(): Promise<CalendarEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id, reference, source, status, booking_start, booking_end, available_again_at, guests, places(title_ar)")
+    .neq("status", "cancelled")
+    .order("booking_start");
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    reference: row.reference,
+    place_title_ar:
+      (row.places as unknown as { title_ar: string } | null)?.title_ar ?? "",
+    source: row.source,
+    status: row.status,
+    booking_start: row.booking_start,
+    booking_end: row.booking_end,
+    available_again_at: row.available_again_at,
+    guests: row.guests,
+  }));
+}

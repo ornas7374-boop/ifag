@@ -1,13 +1,13 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Heart, MapPin, Truck, Wrench } from "lucide-react";
+import { MapPin, Truck, Wrench } from "lucide-react";
 
 import { PageShell } from "@/components/layout/page-shell";
 import { PriceBreakdown } from "@/components/domain/price-breakdown";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { RatingStars } from "@/components/domain/rating-stars";
+import { FavoriteButton } from "@/components/domain/favorite-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ar } from "@/content/ar";
@@ -210,14 +210,7 @@ export default async function ServicePage({
                 }}
               />
 
-              <Button
-                variant="outline"
-                className="w-full"
-                aria-label={ar.common.addToFavorites}
-              >
-                <Heart aria-hidden />
-                {ar.common.addToFavorites}
-              </Button>
+<FavoriteButton kind="service" id={service.id} variant="button" />
             </CardContent>
           </Card>
         </aside>

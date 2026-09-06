@@ -262,3 +262,16 @@ export interface Review {
   body_ar: string;
   created_at: string;
 }
+
+/** عنصر في تقويم المزوّد — يشمل حجوزات العملاء وحجب الصيانة. */
+export interface CalendarEntry {
+  id: string;
+  reference: string;
+  place_title_ar: string;
+  source: "customer" | "host_block" | "maintenance";
+  status: BookingStatus;
+  booking_start: string;
+  booking_end: string;
+  available_again_at: string | null;
+  guests: number;
+}

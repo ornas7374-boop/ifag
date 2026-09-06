@@ -155,3 +155,76 @@ export async function listAddonsForPlace(placeId: string): Promise<Addon[]> {
 export async function listReviews(): Promise<Review[]> {
   return reviewsFixture;
 }
+
+// ── الحجوزات والطلبات ──
+
+import { bookings as bookingsFixture, orders as ordersFixture } from "@/lib/fixtures/bookings";
+import type { Booking, CalendarEntry, Order } from "@/types/domain";
+import type { BookingScope, OrderScope } from "@/lib/data/contracts";
+
+export async function listBookings(scope: BookingScope): Promise<Booking[]> {
+  const now = Date.now();
+  let rows = bookingsFixture;
+
+  // صفوف الحجب ليست حجوزات عملاء — تُخفى عن لوحة العميل
+  if (!scope.includeBlocks) {
+    rows = rows.filter((b) => b.customer_id !== "");
+  }
+
+  if (scope.when === "upcoming") {
+    rows = rows.filter(
+      (b) =>
+        new Date(b.booking_end).getTime() >= now &&
+        b.status !== "cancelled" &&
+        b.status !== "completed",
+    );
+  } else if (scope.when === "past") {
+    rows = rows.filter(
+      (b) =>
+        new Date(b.booking_end).getTime() < now ||
+        b.status === "completed" ||
+        b.status === "cancelled",
+    );
+  }
+
+  return [...rows].sort(
+    (a, b) =>
+      new Date(b.booking_start).getTime() - new Date(a.booking_start).getTime(),
+  );
+}
+
+export async function getBooking(id: string): Promise<Booking | null> {
+  return bookingsFixture.find((b) => b.id === id) ?? null;
+}
+
+export async function listOrders(scope: OrderScope): Promise<Order[]> {
+  let rows = ordersFixture;
+  if (scope.status) rows = rows.filter((o) => o.status === scope.status);
+  return [...rows].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+export async function getOrder(id: string): Promise<Order | null> {
+  return ordersFixture.find((o) => o.id === id) ?? null;
+}
+
+export async function listCalendar(hostId: string): Promise<CalendarEntry[]> {
+  return bookingsFixture
+    .filter((b) => b.host_id === hostId && b.status !== "cancelled")
+    .map((b) => ({
+      id: b.id,
+      reference: b.reference,
+      place_title_ar: b.place_title_ar,
+      source: b.customer_id === "" ? ("host_block" as const) : ("customer" as const),
+      status: b.status,
+      booking_start: b.booking_start,
+      booking_end: b.booking_end,
+      available_again_at: b.available_again_at,
+      guests: b.guests,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.booking_start).getTime() - new Date(b.booking_start).getTime(),
+    );
+}
