@@ -1,0 +1,351 @@
+import { createClient } from "@/lib/supabase/server";
+import { halalas } from "@/lib/money";
+import type {
+  Addon,
+  Amenity,
+  Category,
+  City,
+  Place,
+  Review,
+  Service,
+} from "@/types/domain";
+import type { Tables } from "@/types/database";
+import type { ListingFilters, ListResult } from "@/lib/data/contracts";
+
+/**
+ * التنفيذ الحقيقي لطبقة البيانات فوق Supabase.
+ *
+ * يطابق واجهة lib/data/contracts حرفيًا، فالانتقال إليه لا يتطلب
+ * تعديل أي صفحة أو مكوّن — فقط توفّر متغيّرات البيئة.
+ *
+ * كل الاستعلامات تمر عبر عميل الخادم الذي يحمل جلسة المستخدم،
+ * فسياسات RLS مطبَّقة تلقائيًا: العامة ترى المنشور فقط، وصاحب
+ * المكان يرى مسوّداته.
+ */
+
+// ── محوّلات: صف قاعدة البيانات → نوع النطاق ──
+// المبالغ تصل كأعداد صحيحة (هللات) لأن الأعمدة bigint وليست numeric.
+
+function toPlace(
+  row: Tables<"places"> & { cities?: { name_ar: string } | null },
+  amenityIds: string[] = [],
+  imageUrls: string[] = [],
+): Place {
+  return {
+    id: row.id,
+    slug: row.slug,
+    host_id: row.host_id,
+    title_ar: row.title_ar,
+    description_ar: row.description_ar,
+    place_kind: row.place_kind,
+    status: row.status,
+    city_id: row.city_id,
+    city_name_ar: row.cities?.name_ar ?? "",
+    district_id: row.district_id,
+    address_text: row.address_text,
+    location: { lat: row.latitude, lng: row.longitude },
+    cover_image_url: imageUrls[0] ?? "/placeholder/kashta-1.svg",
+    image_urls: imageUrls,
+    amenity_ids: amenityIds,
+    capacity_min: row.capacity_min,
+    capacity_max: row.capacity_max,
+    check_in_time: row.check_in_time,
+    check_out_time: row.check_out_time,
+    turnaround_minutes: row.turnaround_minutes,
+    price_per_hour: row.price_per_hour === null ? null : halalas(row.price_per_hour),
+    price_per_day: row.price_per_day === null ? null : halalas(row.price_per_day),
+    price_per_night:
+      row.price_per_night === null ? null : halalas(row.price_per_night),
+    rating_avg: row.rating_avg,
+    rating_count: row.rating_count,
+    cancellation_policy_ar: row.cancellation_policy_ar,
+    rules_ar: row.rules_ar,
+    created_at: row.created_at,
+  };
+}
+
+function toService(
+  row: Tables<"services"> & { cities?: { name_ar: string } | null },
+  imageUrls: string[] = [],
+): Service {
+  return {
+    id: row.id,
+    slug: row.slug,
+    host_id: row.host_id,
+    title_ar: row.title_ar,
+    description_ar: row.description_ar,
+    service_kind: row.service_kind,
+    status: row.status,
+    city_id: row.city_id,
+    city_name_ar: row.cities?.name_ar ?? "",
+    cover_image_url: imageUrls[0] ?? "/placeholder/tent-1.svg",
+    image_urls: imageUrls,
+    price: halalas(row.price),
+    pricing_mode: row.pricing_mode,
+    min_quantity: row.min_quantity,
+    max_quantity: row.max_quantity,
+    unit_label_ar: row.unit_label_ar,
+    requires_delivery: row.requires_delivery,
+    requires_setup: row.requires_setup,
+    setup_duration_minutes: row.setup_duration_minutes,
+    delivery_strategy: row.delivery_strategy,
+    delivery_fee: halalas(row.delivery_fee),
+    free_delivery_over:
+      row.free_delivery_over === null ? null : halalas(row.free_delivery_over),
+    max_distance_km: row.max_distance_km,
+    rating_avg: row.rating_avg,
+    rating_count: row.rating_count,
+    created_at: row.created_at,
+  };
+}
+
+/** ترتيب الاستعلام — يُترجم إلى ORDER BY في قاعدة البيانات لا في الذاكرة. */
+function orderFor(sort: ListingFilters["sort"], priceColumn: string) {
+  switch (sort) {
+    case "price_asc":
+      return { column: priceColumn, ascending: true };
+    case "price_desc":
+      return { column: priceColumn, ascending: false };
+    case "rating":
+      return { column: "rating_avg", ascending: false };
+    case "newest":
+      return { column: "created_at", ascending: false };
+    default:
+      return { column: "rating_avg", ascending: false };
+  }
+}
+
+export async function listCities(): Promise<City[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("cities")
+    .select("id, slug, name_ar")
+    .order("name_ar");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listCategories(): Promise<Category[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, slug, name_ar, icon")
+    .order("sort_order");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listAmenities(): Promise<Amenity[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("amenities")
+    .select("id, slug, name_ar, icon")
+    .order("name_ar");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getAmenitiesByIds(ids: string[]): Promise<Amenity[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("amenities")
+    .select("id, slug, name_ar, icon")
+    .in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listPlaces(
+  filters: ListingFilters = {},
+): Promise<ListResult<Place>> {
+  const supabase = await createClient();
+
+  // count: "exact" يُرجع العدد الكلي قبل الحد، وهو ما تحتاجه صفحة النتائج
+  let query = supabase
+    .from("places")
+    .select("*, cities(name_ar)", { count: "exact" })
+    .eq("status", "published");
+
+  if (filters.cityId) query = query.eq("city_id", filters.cityId);
+  if (filters.minRating !== undefined) {
+    query = query.gte("rating_avg", filters.minRating);
+  }
+  if (filters.query) {
+    // البحث في العنوان والوصف معًا
+    query = query.or(
+      `title_ar.ilike.%${filters.query}%,description_ar.ilike.%${filters.query}%`,
+    );
+  }
+  if (filters.minPrice !== undefined) {
+    query = query.gte("price_per_night", filters.minPrice);
+  }
+  if (filters.maxPrice !== undefined) {
+    query = query.lte("price_per_night", filters.maxPrice);
+  }
+
+  const order = orderFor(filters.sort, "price_per_night");
+  query = query.order(order.column, { ascending: order.ascending });
+  if (filters.limit) query = query.limit(filters.limit);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data: (data ?? []).map((row) => toPlace(row)),
+    count: count ?? 0,
+  };
+}
+
+export async function getPlaceBySlug(slug: string): Promise<Place | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("places")
+    .select("*, cities(name_ar), place_amenities(amenity_id), listing_images(storage_path, sort_order, is_cover)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const amenityIds = (data.place_amenities ?? []).map(
+    (a: { amenity_id: string }) => a.amenity_id,
+  );
+
+  // صورة الغلاف أولًا ثم البقية بترتيب العرض
+  const images = [...(data.listing_images ?? [])].sort(
+    (a, b) =>
+      Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order,
+  );
+
+  return toPlace(data, amenityIds, images.map((i) => i.storage_path));
+}
+
+export async function listServices(
+  filters: ListingFilters = {},
+): Promise<ListResult<Service>> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("services")
+    .select("*, cities(name_ar)", { count: "exact" })
+    .eq("status", "published");
+
+  if (filters.cityId) query = query.eq("city_id", filters.cityId);
+  if (filters.minRating !== undefined) {
+    query = query.gte("rating_avg", filters.minRating);
+  }
+  if (filters.query) {
+    query = query.or(
+      `title_ar.ilike.%${filters.query}%,description_ar.ilike.%${filters.query}%`,
+    );
+  }
+  if (filters.minPrice !== undefined) query = query.gte("price", filters.minPrice);
+  if (filters.maxPrice !== undefined) query = query.lte("price", filters.maxPrice);
+
+  const order = orderFor(filters.sort, "price");
+  query = query.order(order.column, { ascending: order.ascending });
+  if (filters.limit) query = query.limit(filters.limit);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data: (data ?? []).map((row) => toService(row)),
+    count: count ?? 0,
+  };
+}
+
+export async function getServiceBySlug(slug: string): Promise<Service | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("services")
+    .select("*, cities(name_ar), listing_images(storage_path, sort_order, is_cover)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const images = [...(data.listing_images ?? [])].sort(
+    (a, b) =>
+      Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order,
+  );
+
+  return toService(data, images.map((i) => i.storage_path));
+}
+
+export async function listAddonsForPlace(placeId: string): Promise<Addon[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("addons")
+    .select("*")
+    .eq("place_id", placeId)
+    .eq("is_active", true);
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    place_id: row.place_id,
+    name_ar: row.name_ar,
+    description_ar: row.description_ar,
+    image_url: row.image_url,
+    price: halalas(row.price),
+    pricing_mode: row.pricing_mode,
+  }));
+}
+
+export async function listReviews(target?: {
+  placeId?: string;
+  serviceId?: string;
+}): Promise<Review[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("reviews")
+    .select("id, rating, body_ar, created_at, profiles(full_name, avatar_url)")
+    .eq("is_hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (target?.placeId) query = query.eq("place_id", target.placeId);
+  if (target?.serviceId) query = query.eq("service_id", target.serviceId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const profile = row.profiles as unknown as
+      | { full_name: string; avatar_url: string | null }
+      | null;
+    return {
+      id: row.id,
+      author_name: profile?.full_name ?? "مستخدم",
+      author_avatar_url: profile?.avatar_url ?? null,
+      rating: row.rating,
+      body_ar: row.body_ar,
+      created_at: row.created_at,
+    };
+  });
+}
+
+/**
+ * فحص إتاحة المكان قبل الإرسال — للمعاينة في الواجهة.
+ * ليس ضمانة: الضمانة الحقيقية هي قيد الاستبعاد في قاعدة البيانات.
+ */
+export async function checkPlaceAvailability(
+  placeId: string,
+  start: string,
+  end: string,
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("check_place_availability", {
+    p_place_id: placeId,
+    p_start: start,
+    p_end: end,
+  });
+  if (error) throw error;
+  return data ?? false;
+}
