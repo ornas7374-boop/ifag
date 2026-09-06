@@ -19,6 +19,7 @@ export type {
   ReviewTarget,
   BookingScope,
   OrderScope,
+  DueActions,
   DataRepository,
 } from "@/lib/data/contracts";
 
@@ -39,6 +40,11 @@ export const getBooking = repo.getBooking;
 export const listOrders = repo.listOrders;
 export const getOrder = repo.getOrder;
 export const listCalendar = repo.listCalendar;
+export const listProfiles = repo.listProfiles;
+export const listNotifications = repo.listNotifications;
+export const listPayments = repo.listPayments;
+export const listAddresses = repo.listAddresses;
+export const listHostDueActions = repo.listHostDueActions;
 
 /** يظهر في لوحة الإدارة ليعرف المشغّل أي مصدر بيانات يعمل الآن. */
 export const dataSource = isSupabaseConfigured ? "supabase" : "fixtures";

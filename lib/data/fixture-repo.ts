@@ -228,3 +228,62 @@ export async function listCalendar(hostId: string): Promise<CalendarEntry[]> {
         new Date(a.booking_start).getTime() - new Date(b.booking_start).getTime(),
     );
 }
+
+// ── المستخدمون والإشعارات والمدفوعات والعناوين ──
+
+import {
+  addresses as addressesFixture,
+  notifications as notificationsFixture,
+  payments as paymentsFixture,
+  profiles as profilesFixture,
+} from "@/lib/fixtures/people";
+import type {
+  DeliveryAddress,
+  NotificationItem,
+  PaymentRecord,
+  Profile,
+  Role,
+} from "@/types/domain";
+
+export async function listProfiles(role?: Role): Promise<Profile[]> {
+  return role ? profilesFixture.filter((p) => p.role === role) : profilesFixture;
+}
+
+export async function listNotifications(userId: string): Promise<NotificationItem[]> {
+  return notificationsFixture
+    .filter((n) => n.user_id === userId)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+export async function listPayments(): Promise<PaymentRecord[]> {
+  return [...paymentsFixture].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+export async function listAddresses(): Promise<DeliveryAddress[]> {
+  return addressesFixture;
+}
+
+export async function listHostDueActions(hostId: string) {
+  const now = Date.now();
+  const rows = bookingsFixture.filter(
+    (b) => b.host_id === hostId && b.customer_id !== "",
+  );
+
+  return {
+    needsCheckIn: rows.filter(
+      (b) =>
+        b.status === "confirmed" &&
+        !b.actual_check_in &&
+        new Date(b.booking_start).getTime() <= now &&
+        new Date(b.booking_end).getTime() >= now,
+    ),
+    needsCheckOut: rows.filter(
+      (b) =>
+        b.actual_check_in &&
+        !b.actual_check_out &&
+        new Date(b.booking_end).getTime() <= now,
+    ),
+  };
+}

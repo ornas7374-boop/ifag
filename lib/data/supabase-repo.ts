@@ -495,3 +495,103 @@ export async function listCalendar(): Promise<CalendarEntry[]> {
     guests: row.guests,
   }));
 }
+
+// ── المستخدمون والإشعارات والمدفوعات والعناوين ──
+
+import type {
+  DeliveryAddress,
+  NotificationItem,
+  PaymentRecord,
+  Profile,
+  Role,
+} from "@/types/domain";
+
+export async function listProfiles(role?: Role): Promise<Profile[]> {
+  const supabase = await createClient();
+  let query = supabase.from("profiles").select("id, full_name, role, avatar_url, phone");
+  if (role) query = query.eq("role", role);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listNotifications(): Promise<NotificationItem[]> {
+  // RLS تقصر النتيجة على إشعارات المستخدم الحالي
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listPayments(): Promise<PaymentRecord[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("id, amount, status, provider, created_at, booking_id, order_id")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    reference: row.booking_id ?? row.order_id ?? row.id,
+    kind: row.booking_id ? ("booking" as const) : ("order" as const),
+    customer_name: "",
+    amount: halalas(row.amount),
+    commission: halalas(0),
+    status: row.status,
+    provider: row.provider,
+    created_at: row.created_at,
+  }));
+}
+
+export async function listAddresses(): Promise<DeliveryAddress[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("delivery_addresses").select("*");
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    label_ar: row.label_ar,
+    city_id: row.city_id,
+    district_id: row.district_id,
+    address_text: row.address_text,
+    location: { lat: row.latitude, lng: row.longitude },
+    notes: row.notes,
+  }));
+}
+
+export async function listHostDueActions() {
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  // RLS تقصر النتيجة على حجوزات أماكن هذا المزوّد
+  const [checkIn, checkOut] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select("*, places(title_ar)")
+      .eq("source", "customer")
+      .eq("status", "confirmed")
+      .is("actual_check_in", null)
+      .lte("booking_start", nowIso)
+      .gte("booking_end", nowIso),
+    supabase
+      .from("bookings")
+      .select("*, places(title_ar)")
+      .eq("source", "customer")
+      .not("actual_check_in", "is", null)
+      .is("actual_check_out", null)
+      .lte("booking_end", nowIso),
+  ]);
+
+  if (checkIn.error) throw checkIn.error;
+  if (checkOut.error) throw checkOut.error;
+
+  return {
+    needsCheckIn: (checkIn.data ?? []).map(toBooking),
+    needsCheckOut: (checkOut.data ?? []).map(toBooking),
+  };
+}

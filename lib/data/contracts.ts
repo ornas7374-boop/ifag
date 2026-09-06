@@ -5,8 +5,13 @@ import type {
   CalendarEntry,
   Category,
   City,
+  DeliveryAddress,
+  NotificationItem,
   Order,
+  PaymentRecord,
   Place,
+  Profile,
+  Role,
   Review,
   Service,
 } from "@/types/domain";
@@ -59,6 +64,26 @@ export interface DataRepository {
   listOrders(scope: OrderScope): Promise<Order[]>;
   getOrder(id: string): Promise<Order | null>;
   listCalendar(hostId: string): Promise<CalendarEntry[]>;
+
+  listProfiles(role?: Role): Promise<Profile[]>;
+  listNotifications(userId: string): Promise<NotificationItem[]>;
+  listPayments(): Promise<PaymentRecord[]>;
+  listAddresses(userId: string): Promise<DeliveryAddress[]>;
+  listHostDueActions(hostId: string): Promise<DueActions>;
+}
+
+/**
+ * الإجراءات المستحقة على صاحب المكان الآن.
+ *
+ * تُحسب هنا لا في الصفحة: المقارنة بالوقت الحالي دالة غير نقية،
+ * ووجودها في مكوّن React يُنتج نتائج غير مستقرة عند إعادة العرض.
+ * وهي أيضًا منطق أعمال، ومكانه طبقة البيانات لا الواجهة.
+ */
+export interface DueActions {
+  /** بدأ حجزهم ولم يُسجَّل دخولهم بعد. */
+  needsCheckIn: Booking[];
+  /** انتهى حجزهم ولم يُسجَّل خروجهم — المكان ما زال محجوبًا بلا داعٍ. */
+  needsCheckOut: Booking[];
 }
 
 export interface BookingScope {

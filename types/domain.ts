@@ -275,3 +275,25 @@ export interface CalendarEntry {
   available_again_at: string | null;
   guests: number;
 }
+
+export interface NotificationItem {
+  id: string;
+  user_id: string;
+  title_ar: string;
+  body_ar: string | null;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  reference: string;
+  kind: "booking" | "order";
+  customer_name: string;
+  amount: Halalas;
+  commission: Halalas;
+  status: PaymentStatus;
+  provider: string;
+  created_at: string;
+}
