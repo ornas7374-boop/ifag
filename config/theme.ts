@@ -25,6 +25,8 @@ const CSS_VAR_NAME: Record<ColorToken, string> = {
   border: "border",
   input: "input",
   ring: "ring",
+  chartSeries1: "chart-1",
+  chartSeries2: "chart-2",
 };
 
 function schemeToVars(scheme: ColorScheme, suffix: "light" | "dark") {

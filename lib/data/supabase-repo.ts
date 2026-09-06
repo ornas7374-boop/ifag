@@ -595,3 +595,65 @@ export async function listHostDueActions() {
     needsCheckOut: (checkOut.data ?? []).map(toBooking),
   };
 }
+
+const MONTHS_AR = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+];
+
+export async function listMonthlyEarnings() {
+  const supabase = await createClient();
+  const since = new Date();
+  since.setMonth(since.getMonth() - 5);
+  since.setDate(1);
+
+  const [bookings, orders] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select("booking_start, total_amount, commission_amount")
+      .eq("payment_status", "paid")
+      .gte("booking_start", since.toISOString()),
+    supabase
+      .from("orders")
+      .select("created_at, total_amount, commission_amount")
+      .eq("payment_status", "paid")
+      .gte("created_at", since.toISOString()),
+  ]);
+  if (bookings.error) throw bookings.error;
+  if (orders.error) throw orders.error;
+
+  const now = new Date();
+  const buckets = new Map<
+    string,
+    { label: string; gross: number; commission: number; bookings: number; orders: number }
+  >();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.set(`${d.getFullYear()}-${d.getMonth()}`, {
+      label: MONTHS_AR[d.getMonth()]!,
+      gross: 0,
+      commission: 0,
+      bookings: 0,
+      orders: 0,
+    });
+  }
+
+  const add = (iso: string, total: number, commission: number, kind: "b" | "o") => {
+    const d = new Date(iso);
+    const bucket = buckets.get(`${d.getFullYear()}-${d.getMonth()}`);
+    if (!bucket) return;
+    bucket.gross += total;
+    bucket.commission += commission;
+    if (kind === "b") bucket.bookings += 1;
+    else bucket.orders += 1;
+  };
+
+  for (const b of bookings.data ?? []) {
+    add(b.booking_start, b.total_amount, b.commission_amount, "b");
+  }
+  for (const o of orders.data ?? []) {
+    add(o.created_at, o.total_amount, o.commission_amount, "o");
+  }
+
+  return [...buckets.values()].map((b) => ({ ...b, net: b.gross - b.commission }));
+}

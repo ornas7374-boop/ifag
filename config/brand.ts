@@ -42,6 +42,8 @@ export const brandDefaults: BrandConfig = {
       border: "#E3DACD",
       input: "#E3DACD",
       ring: "#1F5C4A",
+      chartSeries1: "#2FA07E",
+      chartSeries2: "#CE7A2E",
     },
     dark: {
       background: "#14120F",
@@ -67,6 +69,8 @@ export const brandDefaults: BrandConfig = {
       border: "#332E27",
       input: "#332E27",
       ring: "#4E9E84",
+      chartSeries1: "#2FA07E",
+      chartSeries2: "#CE7A2E",
     },
   },
 

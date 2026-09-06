@@ -70,6 +70,19 @@ export interface DataRepository {
   listPayments(): Promise<PaymentRecord[]>;
   listAddresses(userId: string): Promise<DeliveryAddress[]>;
   listHostDueActions(hostId: string): Promise<DueActions>;
+  /** النطاق يُحدَّد من جلسة المستخدم عبر RLS، لا بمعامل. */
+  listMonthlyEarnings(): Promise<MonthlyEarning[]>;
+}
+
+/** أرباح شهر واحد، مقسّمة إلى صافي المزوّد وعمولة المنصة. */
+export interface MonthlyEarning {
+  /** اسم الشهر بالعربية. */
+  label: string;
+  gross: number;
+  commission: number;
+  net: number;
+  bookings: number;
+  orders: number;
 }
 
 /**

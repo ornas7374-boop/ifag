@@ -29,7 +29,16 @@ export type ColorToken =
   | "warningForeground"
   | "border"
   | "input"
-  | "ring";
+  | "ring"
+  /*
+   * ألوان المخططات منفصلة عن ألوان الواجهة عن قصد.
+   * اللون الأساسي للواجهة (#1F5C4A) يرسب في فحص المخططات: داكن أكثر
+   * من اللازم وتشبّعه منخفض فيُقرأ رماديًا داخل الرسم. هذه الدرجات
+   * مشتقة من نفس العائلة لكنها مُدرّجة حتى تجتاز فحوص العمى اللوني
+   * والتباين في الوضعين معًا.
+   */
+  | "chartSeries1"
+  | "chartSeries2";
 
 export type ColorScheme = Record<ColorToken, string>;
 

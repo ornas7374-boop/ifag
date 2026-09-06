@@ -32,6 +32,8 @@
   --brand-border: var(--brand-border-light);
   --brand-input: var(--brand-input-light);
   --brand-ring: var(--brand-ring-light);
+  --brand-chart-1: var(--brand-chart-1-light);
+  --brand-chart-2: var(--brand-chart-2-light);
 
   color-scheme: light;
 }
@@ -60,6 +62,8 @@
   --brand-border: var(--brand-border-dark);
   --brand-input: var(--brand-input-dark);
   --brand-ring: var(--brand-ring-dark);
+  --brand-chart-1: var(--brand-chart-1-dark);
+  --brand-chart-2: var(--brand-chart-2-dark);
 
   color-scheme: dark;
 }
@@ -93,6 +97,8 @@
   --color-border: var(--brand-border);
   --color-input: var(--brand-input);
   --color-ring: var(--brand-ring);
+  --color-chart-1: var(--brand-chart-1);
+  --color-chart-2: var(--brand-chart-2);
 
   --font-sans: var(--brand-font-sans);
 

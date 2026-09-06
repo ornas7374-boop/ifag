@@ -20,6 +20,7 @@ export type {
   BookingScope,
   OrderScope,
   DueActions,
+  MonthlyEarning,
   DataRepository,
 } from "@/lib/data/contracts";
 
@@ -45,6 +46,7 @@ export const listNotifications = repo.listNotifications;
 export const listPayments = repo.listPayments;
 export const listAddresses = repo.listAddresses;
 export const listHostDueActions = repo.listHostDueActions;
+export const listMonthlyEarnings = repo.listMonthlyEarnings;
 
 /** يظهر في لوحة الإدارة ليعرف المشغّل أي مصدر بيانات يعمل الآن. */
 export const dataSource = isSupabaseConfigured ? "supabase" : "fixtures";

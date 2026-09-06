@@ -287,3 +287,60 @@ export async function listHostDueActions(hostId: string) {
     ),
   };
 }
+
+const MONTHS_AR = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+];
+
+/**
+ * تجميع الأرباح على آخر ستة أشهر.
+ * الحساب هنا لا في الصفحة: المقارنة بالوقت الحالي دالة غير نقية.
+ */
+export async function listMonthlyEarnings() {
+  const now = new Date();
+  const buckets = new Map<
+    string,
+    { label: string; gross: number; commission: number; bookings: number; orders: number }
+  >();
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.set(`${d.getFullYear()}-${d.getMonth()}`, {
+      label: MONTHS_AR[d.getMonth()]!,
+      gross: 0,
+      commission: 0,
+      bookings: 0,
+      orders: 0,
+    });
+  }
+
+  const add = (
+    iso: string,
+    total: number,
+    commission: number,
+    kind: "booking" | "order",
+  ) => {
+    const d = new Date(iso);
+    const bucket = buckets.get(`${d.getFullYear()}-${d.getMonth()}`);
+    if (!bucket) return; // خارج نافذة الستة أشهر
+    bucket.gross += total;
+    bucket.commission += commission;
+    if (kind === "booking") bucket.bookings += 1;
+    else bucket.orders += 1;
+  };
+
+  for (const b of bookingsFixture) {
+    if (b.payment_status !== "paid") continue;
+    add(b.booking_start, b.total_amount, b.commission_amount, "booking");
+  }
+  for (const o of ordersFixture) {
+    if (o.payment_status !== "paid") continue;
+    add(o.created_at, o.total_amount, o.commission_amount, "order");
+  }
+
+  return [...buckets.values()].map((b) => ({
+    ...b,
+    net: b.gross - b.commission,
+  }));
+}
