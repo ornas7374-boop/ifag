@@ -68,7 +68,8 @@ export interface DataRepository {
   listProfiles(role?: Role): Promise<Profile[]>;
   listNotifications(userId: string): Promise<NotificationItem[]>;
   listPayments(): Promise<PaymentRecord[]>;
-  listAddresses(userId: string): Promise<DeliveryAddress[]>;
+  /** النطاق من الجلسة عبر RLS. */
+  listAddresses(): Promise<DeliveryAddress[]>;
   listHostDueActions(hostId: string): Promise<DueActions>;
   /** النطاق يُحدَّد من جلسة المستخدم عبر RLS، لا بمعامل. */
   listMonthlyEarnings(): Promise<MonthlyEarning[]>;
