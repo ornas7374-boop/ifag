@@ -11,6 +11,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { QuantityStepper } from "@/components/cart/quantity-stepper";
 import { PriceBreakdown } from "@/components/domain/price-breakdown";
+import {
+  submitBooking,
+  type BookingResult,
+} from "@/app/(public)/places/[slug]/actions";
 import { ar } from "@/content/ar";
 import { formatSAR } from "@/lib/format";
 import { priceUnitLabel } from "@/lib/adapters";
@@ -25,6 +29,7 @@ import {
 import type { Addon, RateUnit } from "@/types/domain";
 
 interface Props {
+  placeId: string;
   addons: Addon[];
   rates: {
     price_per_hour: Halalas | null;
@@ -34,6 +39,8 @@ interface Props {
   capacityMin: number;
   capacityMax: number;
   checkInTime: string;
+  /** false قبل ربط القاعدة — الزر يبقى معطّلًا بدل أن يفشل صامتًا. */
+  canBook: boolean;
 }
 
 /** الأنواع المتاحة فعلًا — لا نعرض تبويبًا بلا سعر. */
@@ -71,12 +78,16 @@ function todayISO(): string {
 }
 
 export function BookingWidget({
+  placeId,
   addons,
   rates,
   capacityMin,
   capacityMax,
   checkInTime,
+  canBook,
 }: Props) {
+  const [pending, startTransition] = React.useTransition();
+  const [result, setResult] = React.useState<BookingResult | null>(null);
   const units = availableUnits(rates);
   const [unit, setUnit] = React.useState<RateUnit>(defaultUnit(rates));
   const [date, setDate] = React.useState(todayISO());
@@ -249,8 +260,39 @@ export function BookingWidget({
       {/* السعر يتحدّث لحظيًا مع كل تغيير أعلاه */}
       <PriceBreakdown quote={quote} />
 
-      <Button size="lg" className="w-full">
-        {ar.common.bookNow}
+      {result?.ok === true ? (
+        <p className="rounded-md bg-success/10 p-3 text-sm text-success">
+          تم الحجز. رقمك المرجعي <span dir="ltr">{result.reference}</span> —
+          المبلغ {formatSAR(halalas(result.total))}.
+        </p>
+      ) : null}
+      {result?.ok === false ? (
+        <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          {result.error}
+        </p>
+      ) : null}
+
+      <Button
+        size="lg"
+        className="w-full"
+        disabled={!canBook || pending || result?.ok === true}
+        onClick={() =>
+          startTransition(async () => {
+            setResult(
+              await submitBooking({
+                placeId,
+                rateUnit: unit,
+                date,
+                duration,
+                guests,
+                startTime: unit === "hour" ? startTime : undefined,
+                addonIds: [...selectedAddons],
+              }),
+            );
+          })
+        }
+      >
+        {pending ? ar.common.loading : ar.common.bookNow}
       </Button>
 
       <p className="text-xs text-muted-foreground">

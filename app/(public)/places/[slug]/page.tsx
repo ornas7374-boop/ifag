@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ar } from "@/content/ar";
 import { formatNumber, formatSAR } from "@/lib/format";
 import {
+  dataSource,
   getAmenitiesByIds,
   getPlaceBySlug,
   listAddonsForPlace,
@@ -234,6 +235,8 @@ export default async function PlacePage({
             </CardHeader>
             <CardContent className="space-y-4">
               <BookingWidget
+                placeId={place.id}
+                canBook={dataSource === "supabase"}
                 addons={addons}
                 rates={{
                   price_per_hour: place.price_per_hour,

@@ -1267,6 +1267,43 @@ export interface Database {
         Args: { p_place_id: string; p_start: string; p_end: string };
         Returns: boolean;
       };
+      /**
+       * تعيد الحساب في الخادم ولا تقبل أي مبلغ من العميل.
+       * انظر supabase/migrations/0016_create_booking.sql
+       */
+      create_booking: {
+        Args: {
+          p_place_id: string;
+          p_rate_unit: Database["public"]["Enums"]["rate_unit"];
+          p_date: string;
+          p_duration: number;
+          p_guests: number;
+          p_start_time?: string | null;
+          p_addon_ids?: string[];
+        };
+        Returns: {
+          id: string;
+          reference: string;
+          booking_start: string;
+          booking_end: string;
+          base_amount: number;
+          addons_amount: number;
+          total_amount: number;
+          commission_amount: number;
+        };
+      };
+      pricing_multiplier: {
+        Args: {
+          p_mode: Database["public"]["Enums"]["pricing_mode"];
+          p_hours?: number;
+          p_days?: number;
+          p_nights?: number;
+          p_persons?: number;
+          p_quantity?: number;
+          p_distance?: number;
+        };
+        Returns: number;
+      };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       auth_role: {
         Args: Record<string, never>;
