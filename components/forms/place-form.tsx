@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useActionState } from "react";
 import { Info } from "lucide-react";
 
+import { createPlace, type FormResult } from "@/app/(host)/host/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,12 +39,14 @@ const TURNAROUND = [
 
 function PriceField({
   id,
+  name,
   label,
   value,
   onChange,
   suffix,
 }: {
   id: string;
+  name: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -57,6 +61,7 @@ function PriceField({
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
+        name={name}
         type="number"
         min={0}
         step="0.01"
@@ -86,6 +91,10 @@ export function PlaceForm({
   cities: City[];
   amenities: Amenity[];
 }) {
+  const [state, action, pending] = useActionState<FormResult, FormData>(
+    createPlace,
+    null,
+  );
   const [kind, setKind] = React.useState<PlaceKind>("kashta");
   const [hourly, setHourly] = React.useState("");
   const [daily, setDaily] = React.useState("");
@@ -95,7 +104,6 @@ export function PlaceForm({
     new Set(),
   );
   const [location, setLocation] = React.useState<PickedLocation | null>(null);
-  const [submitted, setSubmitted] = React.useState(false);
 
   const hasAnyPrice = [hourly, daily, nightly].some(
     (v) => v !== "" && Number(v) > 0,
@@ -111,13 +119,17 @@ export function PlaceForm({
   }
 
   return (
-    <form
-      className="space-y-6"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setSubmitted(true);
-      }}
-    >
+    <form action={action} className="space-y-6">
+      {/* قيم تُدار بالحالة ولا تملك حقلًا ظاهرًا تُرسل من هنا */}
+      <input type="hidden" name="place_kind" value={kind} />
+      <input type="hidden" name="turnaround_minutes" value={turnaround} />
+      <input type="hidden" name="latitude" value={location?.point.lat ?? ""} />
+      <input type="hidden" name="longitude" value={location?.point.lng ?? ""} />
+      <input type="hidden" name="address_text" value={location?.addressText ?? ""} />
+      {[...selectedAmenities].map((id) => (
+        <input key={id} type="hidden" name="amenities" value={id} />
+      ))}
+
       <Card>
         <CardHeader>
           <CardTitle>الأساسيات</CardTitle>
@@ -125,13 +137,14 @@ export function PlaceForm({
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="title">اسم المكان</Label>
-            <Input id="title" required />
+            <Input id="title" name="title" required />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="description">الوصف</Label>
             <textarea
               id="description"
+              name="description"
               rows={4}
               className="w-full rounded-md border border-input bg-card p-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             />
@@ -156,7 +169,7 @@ export function PlaceForm({
 
             <div className="space-y-1.5">
               <Label htmlFor="city">المدينة</Label>
-              <Select defaultValue={cities[0]?.id}>
+              <Select name="city_id" defaultValue={cities[0]?.id}>
                 <SelectTrigger id="city">
                   <SelectValue />
                 </SelectTrigger>
@@ -174,11 +187,25 @@ export function PlaceForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="cap-min">أقل عدد أشخاص</Label>
-              <Input id="cap-min" type="number" min={1} defaultValue={1} dir="ltr" />
+              <Input
+                id="cap-min"
+                name="capacity_min"
+                type="number"
+                min={1}
+                defaultValue={1}
+                dir="ltr"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cap-max">أقصى عدد أشخاص</Label>
-              <Input id="cap-max" type="number" min={1} defaultValue={20} dir="ltr" />
+              <Input
+                id="cap-max"
+                name="capacity_max"
+                type="number"
+                min={1}
+                defaultValue={20}
+                dir="ltr"
+              />
             </div>
           </div>
         </CardContent>
@@ -188,8 +215,13 @@ export function PlaceForm({
         <CardHeader>
           <CardTitle>الموقع</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <LocationPicker value={location} onChange={setLocation} />
+          {location === null ? (
+            <p className="rounded-md bg-warning/10 p-3 text-xs text-warning">
+              حدّد الموقع — بدونه لا يستطيع العميل الوصول للمكان.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -204,9 +236,9 @@ export function PlaceForm({
           </p>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <PriceField id="p-hour" label="السعر بالساعة" value={hourly} onChange={setHourly} suffix="للساعة" />
-            <PriceField id="p-day" label="السعر باليوم" value={daily} onChange={setDaily} suffix="لليوم" />
-            <PriceField id="p-night" label="السعر بالليلة" value={nightly} onChange={setNightly} suffix="لليلة" />
+            <PriceField id="p-hour" name="price_per_hour" label="السعر بالساعة" value={hourly} onChange={setHourly} suffix="للساعة" />
+            <PriceField id="p-day" name="price_per_day" label="السعر باليوم" value={daily} onChange={setDaily} suffix="لليوم" />
+            <PriceField id="p-night" name="price_per_night" label="السعر بالليلة" value={nightly} onChange={setNightly} suffix="لليلة" />
           </div>
 
           {!hasAnyPrice ? (
@@ -225,11 +257,11 @@ export function PlaceForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="check-in">وقت الدخول</Label>
-              <Input id="check-in" type="time" defaultValue="16:00" />
+              <Input id="check-in" name="check_in_time" type="time" defaultValue="16:00" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="check-out">وقت الخروج</Label>
-              <Input id="check-out" type="time" defaultValue="12:00" />
+              <Input id="check-out" name="check_out_time" type="time" defaultValue="12:00" />
             </div>
           </div>
 
@@ -290,6 +322,7 @@ export function PlaceForm({
             <Label htmlFor="cancellation">سياسة الإلغاء</Label>
             <textarea
               id="cancellation"
+              name="cancellation_policy"
               rows={3}
               placeholder="مثال: إلغاء مجاني حتى 48 ساعة قبل الموعد."
               className="w-full rounded-md border border-input bg-card p-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -299,6 +332,7 @@ export function PlaceForm({
             <Label htmlFor="rules">قوانين المكان (اختياري)</Label>
             <textarea
               id="rules"
+              name="rules"
               rows={3}
               className="w-full rounded-md border border-input bg-card p-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             />
@@ -306,15 +340,25 @@ export function PlaceForm({
         </CardContent>
       </Card>
 
+      {state?.ok === false ? (
+        <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          {state.error}
+        </p>
+      ) : null}
+      {state?.ok === true ? (
+        <p className="rounded-md bg-success/10 p-3 text-sm text-success">
+          حُفظ المكان وأُرسل للمراجعة. يظهر للعملاء بعد قبول الإدارة له.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="lg" disabled={!hasAnyPrice}>
-          حفظ وإرسال للمراجعة
+        <Button
+          type="submit"
+          size="lg"
+          disabled={!hasAnyPrice || location === null || pending || state?.ok === true}
+        >
+          {pending ? "جارٍ الحفظ…" : "حفظ وإرسال للمراجعة"}
         </Button>
-        {submitted ? (
-          <p className="text-sm text-muted-foreground">
-            النموذج مكتمل — الحفظ ورفع الصور يُفعّلان عند ربط Supabase.
-          </p>
-        ) : null}
       </div>
     </form>
   );
