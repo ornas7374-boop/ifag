@@ -80,7 +80,9 @@ export async function getAmenitiesByIds(ids: string[]): Promise<Amenity[]> {
 export async function listPlaces(
   filters: ListingFilters = {},
 ): Promise<ListResult<Place>> {
-  let rows = placesFixture.filter((p) => p.status === "published");
+  let rows = filters.hostId
+    ? placesFixture.filter((p) => p.host_id === filters.hostId)
+    : placesFixture.filter((p) => p.status === "published");
 
   if (filters.cityId) rows = rows.filter((p) => p.city_id === filters.cityId);
   if (filters.query) {
@@ -118,7 +120,9 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
 export async function listServices(
   filters: ListingFilters = {},
 ): Promise<ListResult<Service>> {
-  let rows = servicesFixture.filter((s) => s.status === "published");
+  let rows = filters.hostId
+    ? servicesFixture.filter((s) => s.host_id === filters.hostId)
+    : servicesFixture.filter((s) => s.status === "published");
 
   if (filters.cityId) rows = rows.filter((s) => s.city_id === filters.cityId);
   if (filters.query) {

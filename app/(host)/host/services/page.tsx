@@ -7,11 +7,22 @@ import { EmptyState } from "@/components/states/empty-state";
 import { Button } from "@/components/ui/button";
 import { ar } from "@/content/ar";
 import { listServices } from "@/lib/data";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: ar.host.services };
 
 export default async function Page() {
-  const { data: services } = await listServices();
+  // قبل ربط Supabase لا يوجد عميل حقيقي أصلًا — التحقق يسبق الإنشاء.
+  let user = null;
+  if (isSupabaseConfigured) {
+    const supabase = await createClient();
+    user = (await supabase.auth.getUser()).data.user;
+  }
+
+  const { data: services } = user
+    ? await listServices({ hostId: user.id })
+    : { data: [] };
 
   return (
     <>

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useActionState } from "react";
+import Link from "next/link";
 import { Info } from "lucide-react";
 
 import { createPlace, type FormResult } from "@/app/(host)/host/actions";
@@ -346,9 +347,15 @@ export function PlaceForm({
         </p>
       ) : null}
       {state?.ok === true ? (
-        <p className="rounded-md bg-success/10 p-3 text-sm text-success">
-          حُفظ المكان وأُرسل للمراجعة. يظهر للعملاء بعد قبول الإدارة له.
-        </p>
+        <div className="space-y-2 rounded-md bg-success/10 p-3 text-sm text-success">
+          <p>حُفظ المكان وأُرسل للمراجعة. يظهر للعملاء بعد قبول الإدارة له.</p>
+          <Link
+            href={`/host/places/${state.id}/edit`}
+            className="font-medium underline underline-offset-2"
+          >
+            أضف صورًا الآن ←
+          </Link>
+        </div>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">

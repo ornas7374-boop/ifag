@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { halalas } from "@/lib/money";
+import { listingImagePublicUrl } from "@/lib/storage";
 import type {
   Addon,
   Amenity,
@@ -25,6 +26,18 @@ import type { ListingFilters, ListResult } from "@/lib/data/contracts";
 
 // ── محوّلات: صف قاعدة البيانات → نوع النطاق ──
 // المبالغ تصل كأعداد صحيحة (هللات) لأن الأعمدة bigint وليست numeric.
+
+type ImageRow = { storage_path: string; sort_order: number; is_cover: boolean };
+
+/**
+ * صورة الغلاف أولًا ثم البقية بترتيب العرض، ومسار الحاوية النسبي
+ * يتحوّل هنا فقط إلى رابط كامل — بقية الطبقة لا تعرف شكل الرابط.
+ */
+function sortedImageUrls(images: ImageRow[] | null | undefined): string[] {
+  return [...(images ?? [])]
+    .sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order)
+    .map((i) => listingImagePublicUrl(i.storage_path));
+}
 
 function toPlace(
   row: Tables<"places"> & { cities?: { name_ar: string } | null },
@@ -164,8 +177,15 @@ export async function listPlaces(
   // count: "exact" يُرجع العدد الكلي قبل الحد، وهو ما تحتاجه صفحة النتائج
   let query = supabase
     .from("places")
-    .select("*, cities(name_ar)", { count: "exact" })
-    .eq("status", "published");
+    .select(
+      "*, cities(name_ar), listing_images(storage_path, sort_order, is_cover)",
+      { count: "exact" },
+    );
+
+  // لوحة المضيف: أماكنه هو بكل الحالات. غير ذلك: المنشور فقط من الكل.
+  query = filters.hostId
+    ? query.eq("host_id", filters.hostId)
+    : query.eq("status", "published");
 
   if (filters.cityId) query = query.eq("city_id", filters.cityId);
   if (filters.minRating !== undefined) {
@@ -192,7 +212,9 @@ export async function listPlaces(
   if (error) throw error;
 
   return {
-    data: (data ?? []).map((row) => toPlace(row)),
+    data: (data ?? []).map((row) =>
+      toPlace(row, [], sortedImageUrls(row.listing_images)),
+    ),
     count: count ?? 0,
   };
 }
@@ -213,13 +235,7 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
     (a: { amenity_id: string }) => a.amenity_id,
   );
 
-  // صورة الغلاف أولًا ثم البقية بترتيب العرض
-  const images = [...(data.listing_images ?? [])].sort(
-    (a, b) =>
-      Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order,
-  );
-
-  return toPlace(data, amenityIds, images.map((i) => i.storage_path));
+  return toPlace(data, amenityIds, sortedImageUrls(data.listing_images));
 }
 
 export async function listServices(
@@ -229,8 +245,14 @@ export async function listServices(
 
   let query = supabase
     .from("services")
-    .select("*, cities(name_ar)", { count: "exact" })
-    .eq("status", "published");
+    .select(
+      "*, cities(name_ar), listing_images(storage_path, sort_order, is_cover)",
+      { count: "exact" },
+    );
+
+  query = filters.hostId
+    ? query.eq("host_id", filters.hostId)
+    : query.eq("status", "published");
 
   if (filters.cityId) query = query.eq("city_id", filters.cityId);
   if (filters.minRating !== undefined) {
@@ -252,7 +274,9 @@ export async function listServices(
   if (error) throw error;
 
   return {
-    data: (data ?? []).map((row) => toService(row)),
+    data: (data ?? []).map((row) =>
+      toService(row, sortedImageUrls(row.listing_images)),
+    ),
     count: count ?? 0,
   };
 }
@@ -269,12 +293,7 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
   if (error) throw error;
   if (!data) return null;
 
-  const images = [...(data.listing_images ?? [])].sort(
-    (a, b) =>
-      Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order,
-  );
-
-  return toService(data, images.map((i) => i.storage_path));
+  return toService(data, sortedImageUrls(data.listing_images));
 }
 
 export async function listAddonsForPlace(placeId: string): Promise<Addon[]> {

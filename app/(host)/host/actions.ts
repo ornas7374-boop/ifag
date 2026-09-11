@@ -12,7 +12,10 @@ import type {
   ServiceKind,
 } from "@/types/domain";
 
-export type FormResult = { ok: true; slug: string } | { ok: false; error: string } | null;
+export type FormResult =
+  | { ok: true; id: string; slug: string }
+  | { ok: false; error: string }
+  | null;
 
 /** ريال نصّي من نموذج ⇒ هللة، أو null إن تُرك فارغًا. */
 function money(form: FormData, key: string): number | null {
@@ -109,7 +112,7 @@ export async function createPlace(_prev: FormResult, form: FormData): Promise<Fo
   }
 
   revalidatePath("/host/places");
-  return { ok: true, slug: data.slug };
+  return { ok: true, id: data.id, slug: data.slug };
 }
 
 /** إضافة خدمة متنقلة. نفس المنطق — سياسة RLS تفرض ملكية المضيف. */
@@ -162,13 +165,100 @@ export async function createService(
       free_delivery_over: money(form, "free_delivery_over"),
       max_distance_km: Number(form.get("max_distance_km")) || null,
     })
-    .select("slug")
+    .select("id, slug")
     .single();
 
   if (error) return { ok: false, error: translate(error.message) };
 
   revalidatePath("/host/services");
-  return { ok: true, slug: data.slug };
+  return { ok: true, id: data.id, slug: data.slug };
+}
+
+export type ImageActionResult = { ok: true } | { ok: false; error: string };
+
+type ImageTarget = "place" | "service";
+
+function imagesListPath(target: ImageTarget): string {
+  return target === "place" ? "/host/places" : "/host/services";
+}
+
+/**
+ * تسجيل صورة في listing_images بعد رفع بايتاتها فعليًا إلى Storage
+ * من المتصفح (انظر components/forms/image-manager.tsx).
+ *
+ * الرفع نفسه لا يمرّ من هنا عمدًا: Server Action تمر عبر دالة
+ * خادم واحدة على Vercel، وحد حجم الطلب هناك (4.5MB) أضيق من حاجة
+ * صور الجوال. الرفع المباشر من المتصفح لحاوية Storage يتجاوز هذا
+ * الحد كليًا ولا يمر على خادمنا إطلاقًا — وسياسات 0017 تتحقق من
+ * الملكية في تلك اللحظة، لا هنا.
+ */
+export async function attachListingImage(input: {
+  target: ImageTarget;
+  targetId: string;
+  storagePath: string;
+  isCover: boolean;
+}): Promise<ImageActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("listing_images").insert({
+    place_id: input.target === "place" ? input.targetId : null,
+    service_id: input.target === "service" ? input.targetId : null,
+    storage_path: input.storagePath,
+    is_cover: input.isCover,
+  });
+
+  if (error) return { ok: false, error: "تعذّر حفظ الصورة. حاول مرة أخرى." };
+
+  const base = imagesListPath(input.target);
+  revalidatePath(`${base}/${input.targetId}/edit`);
+  revalidatePath(base);
+  return { ok: true };
+}
+
+/**
+ * حذف صف الصورة بعد حذف الملف نفسه من Storage (الترتيب من المكوّن:
+ * الملف أولًا ثم الصف — صف يتيم بلا ملف يظهر فورًا كرابط مكسور
+ * فيُكتشف، وملف بلا صف لا يظهر لأحد أصلًا).
+ */
+export async function removeListingImage(
+  imageId: string,
+  target: ImageTarget,
+  targetId: string,
+): Promise<ImageActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("listing_images").delete().eq("id", imageId);
+  if (error) return { ok: false, error: "تعذّر حذف الصورة." };
+
+  const base = imagesListPath(target);
+  revalidatePath(`${base}/${targetId}/edit`);
+  revalidatePath(base);
+  return { ok: true };
+}
+
+/** يُطفئ الغلاف عن كل صور نفس الإعلان قبل تفعيله لصورة واحدة. */
+export async function setCoverImage(
+  imageId: string,
+  target: ImageTarget,
+  targetId: string,
+): Promise<ImageActionResult> {
+  const supabase = await createClient();
+  const column = target === "place" ? "place_id" : "service_id";
+
+  const { error: clearError } = await supabase
+    .from("listing_images")
+    .update({ is_cover: false })
+    .eq(column, targetId);
+  if (clearError) return { ok: false, error: "تعذّر التحديث." };
+
+  const { error } = await supabase
+    .from("listing_images")
+    .update({ is_cover: true })
+    .eq("id", imageId);
+  if (error) return { ok: false, error: "تعذّر التحديث." };
+
+  const base = imagesListPath(target);
+  revalidatePath(`${base}/${targetId}/edit`);
+  revalidatePath(base);
+  return { ok: true };
 }
 
 function translate(message: string): string {

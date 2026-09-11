@@ -34,6 +34,12 @@ export interface ListingFilters {
   amenityIds?: string[];
   sort?: "recommended" | "price_asc" | "price_desc" | "rating" | "newest";
   limit?: number;
+  /**
+   * لوحة المضيف: أماكنه/خدماته هو بكل الحالات (منشور ومسوّدة قيد
+   * المراجعة)، بدل الافتراضي العام (المنشور فقط من كل المضيفين).
+   * تمريره يبدّل الفلتر بالكامل — لا يُجمع مع حالة "منشور فقط".
+   */
+  hostId?: string;
 }
 
 export interface ListResult<T> {

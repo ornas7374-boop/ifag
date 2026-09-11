@@ -147,6 +147,16 @@ export interface Place {
   created_at: string;
 }
 
+/** صف واحد من listing_images — تستخدمها لوحة المضيف عند إدارة الصور. */
+export interface ListingImage {
+  id: string;
+  /** مسار نسبي داخل حاوية Storage، مثل places/<id>/<file>.jpg — لا رابط كامل. */
+  storage_path: string;
+  url: string;
+  sort_order: number;
+  is_cover: boolean;
+}
+
 export interface Service {
   id: string;
   slug: string;

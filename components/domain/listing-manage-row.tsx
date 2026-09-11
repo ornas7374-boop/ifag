@@ -11,7 +11,8 @@ import { priceUnitLabel } from "@/lib/adapters";
 import type { ListingStatus, PricingMode, RateUnit } from "@/types/domain";
 import type { Halalas } from "@/lib/money";
 
-const STATUS: Record<
+/** مُصدَّرة لاستخدامها أيضًا في شاشات تعديل الإعلان (صور المكان/الخدمة). */
+export const LISTING_STATUS_LABEL: Record<
   ListingStatus,
   { label: string; variant: "success" | "warning" | "secondary" | "destructive" }
 > = {
@@ -46,7 +47,7 @@ export function ListingManageRow({
   viewHref: string;
   editHref: string;
 }) {
-  const badge = STATUS[status];
+  const badge = LISTING_STATUS_LABEL[status];
 
   return (
     <Card>

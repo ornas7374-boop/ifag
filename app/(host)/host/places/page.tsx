@@ -7,11 +7,26 @@ import { EmptyState } from "@/components/states/empty-state";
 import { Button } from "@/components/ui/button";
 import { ar } from "@/content/ar";
 import { listPlaces } from "@/lib/data";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: ar.host.places };
 
 export default async function Page() {
-  const { data: places } = await listPlaces();
+  // قبل ربط Supabase (المعاينة الهيكلية) لا يوجد عميل حقيقي أصلًا —
+  // requireSupabaseEnv يرمي خطأ فورًا، فنتحقق من isSupabaseConfigured
+  // قبل إنشاء العميل لا بعده.
+  let user = null;
+  if (isSupabaseConfigured) {
+    const supabase = await createClient();
+    user = (await supabase.auth.getUser()).data.user;
+  }
+
+  // بلا مستخدم (معاينة، أو زائر لم يُطرد بعد) ⇒ لا نطاق مضيف
+  // لتصفيته به، فتبقى القائمة فارغة بدل كشف أماكن الجميع.
+  const { data: places } = user
+    ? await listPlaces({ hostId: user.id })
+    : { data: [] };
 
   return (
     <>
