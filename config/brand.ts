@@ -1,4 +1,8 @@
-import type { BrandConfig } from "@/types/brand";
+import { cache } from "react";
+
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
+import type { BrandConfig, ColorScheme } from "@/types/brand";
 
 /**
  * ★ مصدر الحقيقة الوحيد لهوية المنصة ★
@@ -94,17 +98,63 @@ export const brandDefaults: BrandConfig = {
   },
 };
 
+interface BrandColorOverrides {
+  light?: Partial<ColorScheme>;
+  dark?: Partial<ColorScheme>;
+}
+
 /**
- * ★ نقطة التبديل المستقبلية ★
+ * تُقرأ مرة واحدة لكل طلب حتى لو استدعتها عدة مكونات (التخطيط الجذري
+ * والفوتر والشعار كلها تستدعي getBrand()) — cache من React تُذيب
+ * الاستدعاءات المتكررة ضمن نفس شجرة العرض إلى طلب شبكة واحد.
  *
- * كل المشروع يستدعي getBrand() ولا يستورد brandDefaults مباشرة.
+ * تفشل بصمت إلى null عند أي خطأ: هوية المنصة لا يجوز أن تُسقط الموقع
+ * كله لمجرد تعطّل القراءة من platform_settings.
+ */
+const fetchPlatformSettings = cache(async () => {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from("platform_settings").select("*").maybeSingle();
+    return data;
+  } catch {
+    return null;
+  }
+});
+
+function mergeBrand(
+  base: BrandConfig,
+  row: Awaited<ReturnType<typeof fetchPlatformSettings>>,
+): BrandConfig {
+  if (!row) return base;
+
+  const overrides = (row.brand_colors ?? {}) as BrandColorOverrides;
+
+  return {
+    ...base,
+    appName: row.app_name || base.appName,
+    logoUrl: row.logo_url || base.logoUrl,
+    faviconUrl: row.favicon_url || base.faviconUrl,
+    fontFamily: row.font_family || base.fontFamily,
+    radius: row.border_radius || base.radius,
+    colors: {
+      light: { ...base.colors.light, ...overrides.light },
+      dark: { ...base.colors.dark, ...overrides.dark },
+    },
+  };
+}
+
+/**
+ * ★ نقطة التبديل التي وُعد بها منذ اليوم الأول ★
  *
- * المرحلة 1  : ترجع الثوابت أعلاه.
- * المرحلة 11 : تقرأ صف platform_settings من قاعدة البيانات وتدمجه فوق
- *              الثوابت — عندها يتغيّر جسم هذه الدالة فقط، وصفر مكوّن.
+ * تقرأ صف platform_settings وتدمجه فوق الثوابت أعلاه — أي قيمة
+ * فارغة في الصف (لم يعدّلها المدير بعد) تبقى على افتراضيها من
+ * brandDefaults. لوحة الإدارة (admin/settings) هي ما يكتب هذا الصف.
  *
- * async منذ اليوم الأول تحديدًا حتى لا تحتاج المرحلة 11 لتعديل أي مستدعٍ.
+ * async منذ اليوم الأول تحديدًا حتى لا يحتاج أي مستدعٍ لتعديل نفسه
+ * الآن بعد ربطها فعليًا.
  */
 export async function getBrand(): Promise<BrandConfig> {
-  return brandDefaults;
+  const row = await fetchPlatformSettings();
+  return mergeBrand(brandDefaults, row);
 }

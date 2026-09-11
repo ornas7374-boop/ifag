@@ -174,6 +174,121 @@ export async function createService(
   return { ok: true, id: data.id, slug: data.slug };
 }
 
+export type UpdateResult = { ok: true } | { ok: false; error: string } | null;
+
+/**
+ * تعديل مكان بعد إنشائه — السعر والسعة والوصف والسياسات، لا الموقع
+ * ولا المرافق (تبقى من شاشة الإنشاء لتفادي مضاعفة منتقي الخريطة هنا).
+ *
+ * لا مسار لتغيير الحالة (pending/published) من هنا عمدًا — القبول
+ * يبقى قرار إدارة، وسياسة "host updates own places" في 0012 أصلًا
+ * لا تمنح المضيف صلاحية عليه.
+ */
+export async function updatePlace(
+  _prev: UpdateResult,
+  form: FormData,
+): Promise<UpdateResult> {
+  const supabase = await createClient();
+  const id = text(form, "id");
+  if (!id) return { ok: false, error: "معرّف غير صالح." };
+
+  const title = text(form, "title");
+  if (!title) return { ok: false, error: "اسم المكان مطلوب." };
+
+  const perHour = money(form, "price_per_hour");
+  const perDay = money(form, "price_per_day");
+  const perNight = money(form, "price_per_night");
+  if (perHour === null && perDay === null && perNight === null) {
+    return { ok: false, error: "حدّد سعرًا واحدًا على الأقل." };
+  }
+
+  const capMin = int(form, "capacity_min", 1);
+  const capMax = int(form, "capacity_max", 1);
+  if (capMax < capMin || capMin < 1) {
+    return { ok: false, error: "نطاق السعة غير صالح." };
+  }
+
+  const { data, error } = await supabase
+    .from("places")
+    .update({
+      title_ar: title,
+      description_ar: text(form, "description"),
+      capacity_min: capMin,
+      capacity_max: capMax,
+      turnaround_minutes: int(form, "turnaround_minutes", 0),
+      price_per_hour: perHour,
+      price_per_day: perDay,
+      price_per_night: perNight,
+      cancellation_policy_ar: text(form, "cancellation_policy"),
+      rules_ar: text(form, "rules") || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id");
+
+  if (error) return { ok: false, error: translate(error.message) };
+  if (!data || data.length === 0) {
+    return { ok: false, error: "هذا المكان ليس لك." };
+  }
+
+  revalidatePath("/host/places");
+  revalidatePath(`/host/places/${id}/edit`);
+  return { ok: true };
+}
+
+export async function updateService(
+  _prev: UpdateResult,
+  form: FormData,
+): Promise<UpdateResult> {
+  const supabase = await createClient();
+  const id = text(form, "id");
+  if (!id) return { ok: false, error: "معرّف غير صالح." };
+
+  const title = text(form, "title");
+  if (!title) return { ok: false, error: "اسم الخدمة مطلوب." };
+
+  const price = money(form, "price");
+  if (price === null) return { ok: false, error: "حدّد سعر الخدمة." };
+
+  const requiresDelivery = form.get("requires_delivery") === "on";
+  const strategy = (requiresDelivery
+    ? (text(form, "delivery_strategy") as DeliveryFeeStrategy)
+    : "free") as DeliveryFeeStrategy;
+  const fee = money(form, "delivery_fee") ?? 0;
+
+  if (strategy !== "free" && fee <= 0) {
+    return { ok: false, error: "حدّد رسوم توصيل أكبر من صفر، أو اختر توصيلًا مجانيًا." };
+  }
+
+  const { data, error } = await supabase
+    .from("services")
+    .update({
+      title_ar: title,
+      description_ar: text(form, "description"),
+      price,
+      pricing_mode: text(form, "pricing_mode") as PricingMode,
+      min_quantity: int(form, "min_quantity", 1),
+      unit_label_ar: text(form, "unit_label") || "وحدة",
+      requires_delivery: requiresDelivery,
+      delivery_strategy: strategy,
+      delivery_fee: fee,
+      free_delivery_over: money(form, "free_delivery_over"),
+      max_distance_km: Number(form.get("max_distance_km")) || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id");
+
+  if (error) return { ok: false, error: translate(error.message) };
+  if (!data || data.length === 0) {
+    return { ok: false, error: "هذه الخدمة ليست لك." };
+  }
+
+  revalidatePath("/host/services");
+  revalidatePath(`/host/services/${id}/edit`);
+  return { ok: true };
+}
+
 export type ImageActionResult = { ok: true } | { ok: false; error: string };
 
 type ImageTarget = "place" | "service";
