@@ -165,6 +165,9 @@ create index booking_addons_booking_idx on booking_addons(booking_id);
 create or replace function set_default_available_again_at()
 returns trigger
 language plpgsql
+-- search_path مثبّت: بدونه يستطيع دور ذو صلاحية إنشاء في مخطط يسبق
+-- public أن يزرع دالة بنفس الاسم فتُنفَّذ بدل الأصلية.
+set search_path = public
 as $$
 declare
   turnaround int;
@@ -194,6 +197,7 @@ create or replace function check_place_availability(
 returns boolean
 language sql
 stable
+set search_path = public
 as $$
   select not exists (
     select 1

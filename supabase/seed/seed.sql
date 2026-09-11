@@ -22,13 +22,13 @@ on conflict (slug) do nothing;
 insert into categories (slug, name_ar, icon, sort_order) values
   ('kashta',       'كشتات',         'flame',     1),
   ('camp',         'مخيمات',        'tent',      2),
-  ('wild',         'أماكن برية',    'mountain',  4),
-  ('tents',        'خيام',          'tent-tree', 5),
-  ('majlis',       'جلسات',         'armchair',  6),
-  ('tables',       'طاولات وكراسي', 'table',     7),
-  ('hospitality',  'ضيافة',         'coffee',    8),
-  ('setup',        'خدمات تجهيز',   'wrench',    9),
-  ('equipment',    'معدات',         'package',  10)
+  ('wild',         'أماكن برية',    'mountain',  3),
+  ('tents',        'خيام',          'tent-tree', 4),
+  ('majlis',       'جلسات',         'armchair',  5),
+  ('tables',       'طاولات وكراسي', 'table',     6),
+  ('hospitality',  'ضيافة',         'coffee',    7),
+  ('setup',        'خدمات تجهيز',   'wrench',    8),
+  ('equipment',    'معدات',         'package',   9)
 on conflict (slug) do nothing;
 
 insert into amenities (slug, name_ar, icon) values
