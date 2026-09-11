@@ -39,6 +39,28 @@ function sortedImageUrls(images: ImageRow[] | null | undefined): string[] {
     .map((i) => listingImagePublicUrl(i.storage_path));
 }
 
+/**
+ * صورة بديلة لإعلان لم يرفع صاحبه صورًا بعد.
+ *
+ * تُختار حسب نوع الإعلان لا قيمة واحدة للجميع: صفحة نتائج فيها عشرة
+ * أماكن تحمل كلها نفس الصورة تبدو معطوبة، لا فارغة. والاختيار بين
+ * صورتَي الكشتة مشتق من المعرّف لا عشوائي — العشوائية هنا تعني صورة
+ * مختلفة بين الخادم والمتصفح.
+ */
+function placeFallbackImage(kind: Tables<"places">["place_kind"], id: string): string {
+  if (kind === "camp") return "/placeholder/camp-1.svg";
+  if (kind === "wild") return "/placeholder/wild-1.svg";
+  return parseInt(id.slice(-1), 16) % 2 === 0
+    ? "/placeholder/kashta-1.svg"
+    : "/placeholder/kashta-2.svg";
+}
+
+function serviceFallbackImage(kind: Tables<"services">["service_kind"]): string {
+  if (kind === "product") return "/placeholder/chairs-1.svg";
+  if (kind === "labor") return "/placeholder/coffee-1.svg";
+  return "/placeholder/tent-1.svg";
+}
+
 function toPlace(
   row: Tables<"places"> & { cities?: { name_ar: string } | null },
   amenityIds: string[] = [],
@@ -57,7 +79,7 @@ function toPlace(
     district_id: row.district_id,
     address_text: row.address_text,
     location: { lat: row.latitude, lng: row.longitude },
-    cover_image_url: imageUrls[0] ?? "/placeholder/kashta-1.svg",
+    cover_image_url: imageUrls[0] ?? placeFallbackImage(row.place_kind, row.id),
     image_urls: imageUrls,
     amenity_ids: amenityIds,
     capacity_min: row.capacity_min,
@@ -91,7 +113,7 @@ function toService(
     status: row.status,
     city_id: row.city_id,
     city_name_ar: row.cities?.name_ar ?? "",
-    cover_image_url: imageUrls[0] ?? "/placeholder/tent-1.svg",
+    cover_image_url: imageUrls[0] ?? serviceFallbackImage(row.service_kind),
     image_urls: imageUrls,
     price: halalas(row.price),
     pricing_mode: row.pricing_mode,
