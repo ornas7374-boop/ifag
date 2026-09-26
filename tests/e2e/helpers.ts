@@ -42,3 +42,84 @@ export async function waitForFonts(page: Page) {
 
 /** العناصر التفاعلية الظاهرة (بدون رابط التخطي المخفي حتى التركيز). */
 export const INTERACTIVE = "a[href], button, input, textarea, select, [tabindex]:not([tabindex='-1'])";
+
+const PRIMARY_RGB = "rgb(30, 58, 95)";
+
+/**
+ * Tab عبر الصفحة: كل عنصر قابل للتركيز يُوصل إليه، وعليه إطار focus بلون الحبر.
+ * استثناء: حقل الكتابة في المحادثة يُظهر التركيز على إطار الـ composer نفسه.
+ * يرجع عدد العناصر التي وُصل إليها.
+ */
+export async function checkKeyboardFocus(page: Page) {
+  const expected = await page.locator(`${INTERACTIVE}`).evaluateAll(
+    (els) => els.filter((e) => !(e as HTMLButtonElement).disabled).length,
+  );
+  const seen: string[] = [];
+  for (let i = 0; i < expected + 3; i++) {
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(200); // transition-colors يشمل outline-color (150ms)
+    const info = await page.evaluate((primary) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return null;
+      if (el.dataset.focusSeen) return { key: el.dataset.focusSeen, dup: true, ok: true, why: "" };
+      el.dataset.focusSeen = `${el.tagName}#${document.querySelectorAll("[data-focus-seen]").length}:${el.textContent?.trim() || el.getAttribute("aria-label") || ""}`;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 1 || r.height <= 1) return { key: el.dataset.focusSeen, dup: false, ok: false, why: "invisible" };
+      if (el.tagName === "TEXTAREA") {
+        const box = el.closest("[data-testid=composer]") as HTMLElement | null;
+        const color = box ? getComputedStyle(box).borderTopColor : "";
+        return { key: el.dataset.focusSeen, dup: false, ok: color === primary, why: `composer border ${color}` };
+      }
+      const s = getComputedStyle(el);
+      const ok = s.outlineStyle !== "none" && parseFloat(s.outlineWidth) >= 2 && s.outlineColor === primary;
+      return { key: el.dataset.focusSeen, dup: false, ok, why: `${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor}` };
+    }, PRIMARY_RGB);
+    if (!info || info.dup) continue;
+    seen.push(info.key);
+    expect(info.ok, `${info.key}: ${info.why}`).toBe(true);
+  }
+  expect(seen.length, `reached ${seen.length}/${expected}: ${seen.join(" | ")}`).toBe(expected);
+  return seen.length;
+}
+
+/** كل عنصر تفاعلي ظاهر ومفعّل (عدا حقول الكتابة) يتغيّر شكله عند hover. */
+export async function checkHover(page: Page) {
+  const controls = page.locator("a[href], button");
+  const n = await controls.count();
+  const read = (el: Element) => {
+    const s = getComputedStyle(el);
+    return [s.color, s.backgroundColor, s.borderColor, s.textDecorationColor, s.opacity].join("|");
+  };
+  let checked = 0;
+  for (let i = 0; i < n; i++) {
+    const el = controls.nth(i);
+    if (!(await el.isVisible()) || (await el.isDisabled())) continue;
+    if ((await el.getAttribute("href")) === "#main") continue; // رابط التخطي: مخفي حتى التركيز
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(200);
+    const before = await el.evaluate(read);
+    await el.hover();
+    await page.waitForTimeout(250);
+    const after = await el.evaluate(read);
+    const label = (await el.textContent())?.trim() || (await el.getAttribute("aria-label"));
+    expect(after, `no hover change: ${label}`).not.toBe(before);
+    checked++;
+  }
+  return checked;
+}
+
+/** مساحة اللمس ≥ 44×44 لكل عنصر تفاعلي ظاهر. */
+export async function checkTouchTargets(page: Page) {
+  const controls = page.locator(INTERACTIVE);
+  const n = await controls.count();
+  for (let i = 0; i < n; i++) {
+    const el = controls.nth(i);
+    if (!(await el.isVisible())) continue;
+    // رابط التخطي مخفي (sr-only) حتى يُركَّز عليه، فيُقاس في حالته الظاهرة
+    if ((await el.getAttribute("href")) === "#main") await el.focus();
+    const box = (await el.boundingBox())!;
+    const label = (await el.textContent())?.trim() || (await el.getAttribute("aria-label"));
+    expect(box.height, `height: ${label}`).toBeGreaterThanOrEqual(44);
+    expect(box.width, `width: ${label}`).toBeGreaterThanOrEqual(44);
+  }
+}

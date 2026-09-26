@@ -20,7 +20,7 @@ export function SiteHeader() {
           <Link href="/about" className={buttonClasses({ variant: "ghost" })}>
             {ar.nav.about}
           </Link>
-          <ButtonLink href="/chat" data-testid="header-cta">
+          <ButtonLink href="/" data-testid="header-cta">
             {ar.nav.ask}
           </ButtonLink>
         </nav>

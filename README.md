@@ -26,6 +26,10 @@ npx tsc --noEmit
 npm run test:e2e  # Playwright على بناء الإنتاج — screenshots في screenshots/phase-X/
 ```
 
+## أوامر الـ Mock (للتطوير)
+
+اكتب داخل السؤال: `#error` (خطأ) · `#error-once` (خطأ ثم نجاح عند إعادة المحاولة) · `#nosource` (لم توجد فتوى).
+
 ## التقنيات
 
 Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind CSS v4 · lucide-react ·
@@ -35,14 +39,19 @@ IBM Plex Sans Arabic + Noto Naskh Arabic (محلية عبر next/font/local) · 
 
 ```
 app/
-  (site)/        الصفحات العامة بهيدر وفوتر مشتركين: / · /about · /chat
+  page.tsx       / = شاشة المحادثة (مثل ChatGPT)
+  (site)/        الصفحات التعريفية بهيدر وفوتر: /about
   globals.css    ★ كل الـ design tokens
   fonts.ts       الخطوط (عربي + لاتيني لكل عائلة مع unicode-range)
 components/
   layout/        الهيدر، الفوتر، التنبيه الثابت، الشعار
-  home/          الـ Hero والـ mockup و"كيف يعمل"
+  chat/          شاشة المحادثة: الرسائل، بطاقة المصدر، الـ composer، الحالات
+  about/         "كيف يعمل"
   ui/            الأزرار
 lib/
+  ai/            ★ AIProvider (العقد) + MockProvider
+  store/         ★ ConversationStore (localStorage الآن)
+  chat/          useChat: الإرسال، البث، الإيقاف، إعادة المحاولة، الحفظ
   site.ts        ★ النصوص المعتمدة حرفيًا (التنبيه، الاستقلالية، رابط المصدر)
   content/ar.ts  ★ كل نصوص الواجهة
 tests/e2e/       اختبارات Playwright لكل مرحلة

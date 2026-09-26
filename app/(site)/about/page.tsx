@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Minus } from "lucide-react";
 
+import { HowItWorksSteps } from "@/components/about/how-it-works";
 import { DisclaimerNote } from "@/components/layout/disclaimer-note";
 import { ButtonLink } from "@/components/ui/button";
 import { ar } from "@/lib/content/ar";
@@ -36,6 +37,12 @@ export default function AboutPage() {
           {t.ideaBody.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
+        </Section>
+
+        <Section id="how-it-works" title={ar.howItWorks.title}>
+          <div className="pt-2">
+            <HowItWorksSteps />
+          </div>
         </Section>
 
         <Section id="source" title={t.sourceTitle}>
