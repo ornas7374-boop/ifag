@@ -1,54 +1,73 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { ar } from "@/lib/content/ar";
+import { cn } from "@/lib/cn";
 
-const buttonVariants = cva(
-  // gap-2 يعمل منطقيًا في الاتجاهين، بخلاف ml/mr
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors cursor-pointer disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&_svg]:size-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:opacity-90",
-        accent: "bg-accent text-accent-foreground hover:opacity-90",
-        secondary: "bg-secondary text-secondary-foreground hover:opacity-80",
-        outline:
-          "border border-border bg-transparent hover:bg-secondary hover:text-secondary-foreground",
-        ghost: "hover:bg-secondary hover:text-secondary-foreground",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:opacity-90",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        sm: "h-9 px-3",
-        default: "h-11 px-5",
-        lg: "h-12 px-7 text-base",
-        icon: "h-11 w-11",
-      },
-    },
-    defaultVariants: { variant: "default", size: "default" },
-  },
-);
+type Variant = "primary" | "secondary" | "ghost";
+type Size = "md" | "lg";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+const base =
+  "inline-flex items-center justify-center gap-2 rounded-md font-semibold whitespace-nowrap " +
+  "transition-colors duration-150 select-none";
+
+const variants: Record<Variant, string> = {
+  primary: "bg-primary text-on-primary shadow-sm hover:bg-primary-hover",
+  secondary:
+    "border border-border-strong bg-surface text-text hover:border-primary hover:text-primary",
+  ghost: "text-text-muted hover:bg-surface-muted hover:text-text",
+};
+
+// كل الأحجام ≥ 44px لمساحة اللمس.
+const sizes: Record<Size, string> = {
+  md: "min-h-11 px-4 text-sm",
+  lg: "min-h-12 px-6 text-base",
+};
+
+export function buttonClasses({
+  variant = "primary",
+  size = "md",
+  className,
+}: {
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+}) {
+  return cn(base, variants[variant], sizes[size], className);
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      />
-    );
-  },
-);
-Button.displayName = "Button";
+type ButtonLinkProps = {
+  href: string;
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+  /** رابط خارجي: يفتح في تبويب جديد ويُعلن ذلك لقارئ الشاشة. */
+  external?: boolean;
+  children: React.ReactNode;
+} & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "className">;
 
-export { buttonVariants };
+export function ButtonLink({
+  href,
+  variant,
+  size,
+  className,
+  external,
+  children,
+  ...rest
+}: ButtonLinkProps) {
+  const classes = buttonClasses({ variant, size, className });
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={classes} {...rest}>
+        {children}
+        <span className="sr-only"> {ar.a11y.opensInNewTab}</span>
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={classes} {...rest}>
+      {children}
+    </Link>
+  );
+}

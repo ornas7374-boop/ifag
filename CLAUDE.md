@@ -17,11 +17,11 @@ PHASE 7: بناء قاعدة الفتاوى. PHASE 8: ربط الذكاء الا
 | القرار | القيمة |
 |---|---|
 | الاسم | **سَنَد** (Sanad) |
-| المستودع | `ornas7374-boop/ifag`، الفرع `claude/compassionate-dirac-e320kg`. سَنَد **يحل محل** منصة "كشتة" السابقة (كودها محفوظ في الفرع `claude/install-ui-ux-pro-max-skill-xunks2` وفي سجل git، commit `c3ceb33`) |
+| المستودع | `ornas7374-boop/ifag`، الفرع `claude/compassionate-dirac-e320kg`. سَنَد **يحل محل** منصة "كشتة" السابقة، المؤرشفة كاملة في `legacy/kashta/` (مستبعدة من البناء والفحص — لا تعدّلها) |
 | Stack | Next.js (App Router) + TypeScript strict + Tailwind CSS v4 · Supabase + pgvector لاحقًا · lucide-react |
 | مدير الحزم | pnpm (سكربتات `npm run build/lint` تعمل كما هي) |
-| خط الواجهة | IBM Plex Sans Arabic (400/500/600/700) عبر next/font |
-| خط نصوص الفتاوى | Noto Naskh Arabic عبر next/font |
+| خط الواجهة | IBM Plex Sans Arabic (400/500/600/700) عبر `next/font/local` من `@fontsource` (`app/fonts.ts`) |
+| خط نصوص الفتاوى | Noto Naskh Arabic (variable 400–700) عبر `next/font/local` — صنف `font-naskh` |
 | اللون الأساسي | كحلي حبري `#1E3A5F` — الفكرة البصرية: "حبر على ورق" |
 
 ### Design tokens (مصدرها الوحيد: `app/globals.css`)
@@ -50,6 +50,13 @@ PHASE 7: بناء قاعدة الفتاوى. PHASE 8: ربط الذكاء الا
 ### قرارات معمارية مقترحة (تُحسم في مرحلتها)
 - **PHASE 8 — الحرفية بالتصميم:** النموذج لا يكتب نص الفتوى إطلاقًا. الواجهة تعرض النص من قاعدة البيانات مباشرة، والنموذج يكتب السطر التمهيدي و"الملخص" فقط. لذلك نوع رسالة المساعد (PHASE 2) يتكون من **أجزاء**: `quote` (نص مقتبس مرتبط بـ source) و`generated` (نص مولَّد).
 - لا صور ولا شعارات من binbaz.org.sa في الواجهة.
+
+### قواعد تقنية ثابتة (من PHASE 1)
+- **لا hex خارج `app/globals.css`** (استثناءان موثّقان: `app/icon.svg` و`themeColor` في `app/layout.tsx`).
+- **مع `@theme inline` لا يوجد `--color-*` في CSS:** أي CSS مكتوب يدويًا يستخدم `--sanad-*`. الأصناف (`bg-primary`…) تعمل عاديًا.
+- **كل نصوص الواجهة في `lib/content/ar.ts`**، والنصوص المعتمدة حرفيًا (التنبيه، الاستقلالية، رابط المصدر) في `lib/site.ts`.
+- **النصوص اللاتينية داخل العربية** (نطاقات، أرقام مركّبة) تُلف بـ `dir="ltr"`.
+- **الاختبارات على بناء الإنتاج:** `npm run build && npm run test:e2e`.
 
 ---
 

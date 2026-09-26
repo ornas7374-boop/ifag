@@ -1,45 +1,49 @@
 import Link from "next/link";
 
-import { getBrand } from "@/config/brand";
-import { ar } from "@/content/ar";
+import { DisclaimerNote } from "@/components/layout/disclaimer-note";
+import { LogoMark } from "@/components/layout/logo";
+import { ar } from "@/lib/content/ar";
+import { site } from "@/lib/site";
 
-const legal = [
-  { href: "/terms", label: ar.footer.terms },
-  { href: "/privacy", label: ar.footer.privacy },
-  { href: "/help", label: ar.nav.help },
-];
+const footerLink =
+  "inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-text-muted " +
+  "underline decoration-transparent underline-offset-4 transition-colors " +
+  "hover:text-primary hover:decoration-current";
 
-export async function SiteFooter() {
-  const brand = await getBrand();
-  const year = new Date().getFullYear();
-
+export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border bg-card">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <p className="text-base font-bold text-foreground">{brand.appName}</p>
-          <p className="max-w-md text-sm text-muted-foreground">
-            {brand.appDescription}
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto max-w-content px-4 py-10 sm:px-6 lg:px-8">
+        <DisclaimerNote className="max-w-reading" />
+
+        <p data-testid="independence" className="mt-4 max-w-reading text-sm text-text-muted">
+          {site.independence}
+        </p>
+
+        <div className="mt-8 flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <nav aria-label={ar.a11y.footerNav}>
+            <ul className="flex flex-wrap items-center gap-x-6">
+              <li>
+                <Link href="/about" className={footerLink}>
+                  {ar.nav.about}
+                </Link>
+              </li>
+              <li>
+                <a href={site.source.url} target="_blank" rel="noopener noreferrer" className={footerLink}>
+                  {ar.footer.officialSite}
+                  <span className="sr-only"> {ar.a11y.opensInNewTab}</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+
+          <p className="flex items-center gap-2 text-xs text-text-subtle">
+            <LogoMark className="size-5" />
+            <span>
+              {ar.footer.rights} <span dir="ltr">© {new Date().getFullYear()}</span>
+            </span>
           </p>
         </div>
-
-        <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="روابط الفوتر">
-          {legal.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      <div className="border-t border-border py-4">
-        <p className="mx-auto w-full max-w-7xl px-4 text-xs text-muted-foreground">
-          © {year} {brand.appName} — {ar.footer.rights}
-        </p>
       </div>
     </footer>
   );
