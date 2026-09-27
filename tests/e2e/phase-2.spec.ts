@@ -110,6 +110,21 @@ test("Enter sends, clears the input and keeps focus", async ({ page }) => {
   await expect(input(page)).toBeFocused();
 });
 
+test("rapid double Enter or double-click on a suggestion sends only once", async ({ page }) => {
+  await page.goto("/");
+  await input(page).fill(QUESTION);
+  await input(page).evaluate((el) => {
+    for (let i = 0; i < 2; i++) el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  await page.waitForTimeout(300);
+  await expect(page.getByTestId("user-message")).toHaveCount(1);
+
+  await newChat(page);
+  await page.getByTestId("suggestion").first().dblclick();
+  await page.waitForTimeout(300);
+  await expect(page.getByTestId("user-message")).toHaveCount(1);
+});
+
 test("Shift+Enter inserts a new line without sending", async ({ page }) => {
   await page.goto("/");
   await input(page).fill("السطر الأول");

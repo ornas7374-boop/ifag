@@ -10,12 +10,9 @@ import { ErrorState, NoSourceState } from "./status-blocks";
 export function UserMessage({ message }: { message: UserMessageType }) {
   return (
     <div className="flex justify-end">
-      <div
-        data-testid="user-message"
-        aria-label={ar.chat.userLabel}
-        className="max-w-[85%] rounded-lg rounded-ee-sm bg-primary-soft px-4 py-3 text-text whitespace-pre-wrap [overflow-wrap:anywhere]"
-      >
-        {message.content}
+      <div className="max-w-[85%] rounded-lg rounded-ee-sm bg-primary-soft px-4 py-3 text-text whitespace-pre-wrap [overflow-wrap:anywhere]">
+        <span className="sr-only">{ar.chat.userLabel}: </span>
+        <span data-testid="user-message">{message.content}</span>
       </div>
     </div>
   );

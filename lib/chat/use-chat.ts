@@ -25,6 +25,8 @@ export function useChat() {
   // نسخة متزامنة من المحادثة الحالية للاستخدام داخل الدوال غير المتزامنة.
   const conversationRef = useRef<Conversation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // قفل متزامن من لحظة الإرسال حتى يبدأ run(): يمنع إرسالًا مزدوجًا بضغطتين سريعتين.
+  const sendingRef = useRef(false);
   const lastSaveRef = useRef(0);
 
   const commit = useCallback((next: Conversation | null) => {
@@ -134,7 +136,8 @@ export function useChat() {
   const send = useCallback(
     async (text: string) => {
       const content = text.trim();
-      if (!content || abortRef.current) return false;
+      if (!content || abortRef.current || sendingRef.current) return false;
+      sendingRef.current = true;
 
       const now = Date.now();
       const base = conversationRef.current ?? newConversation(content, now);
@@ -147,11 +150,15 @@ export function useChat() {
       };
 
       commit(next);
-      const store = getConversationStore();
-      await store.save(next);
-      await store.setCurrentId(next.id);
-
-      void run(next.id, assistant.id);
+      try {
+        const store = getConversationStore();
+        await store.save(next);
+        await store.setCurrentId(next.id);
+      } finally {
+        // run() يضبط abortRef متزامنًا في أول سطر، فيبقى الإرسال مقفولًا بلا فجوة.
+        void run(next.id, assistant.id);
+        sendingRef.current = false;
+      }
       return true;
     },
     [commit, run],
