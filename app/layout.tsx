@@ -15,6 +15,10 @@ export const metadata: Metadata = {
 // استثناء موثّق من قاعدة "لا hex خارج globals.css": themeColor لا يقبل متغيّر CSS.
 export const viewport: Viewport = {
   themeColor: "#fbfaf7",
+  // المحتوى يمتد تحت الـ notch (ونعوّضه بـ safe-area)، ولوحة المفاتيح تقلّص
+  // الـ layout (dvh) بدل أن تغطي مربع الكتابة.
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

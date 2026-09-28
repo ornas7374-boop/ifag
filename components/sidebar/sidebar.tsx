@@ -73,7 +73,7 @@ export function Sidebar({
         onClick={(e) => {
           if (e.target === e.currentTarget) onDrawerClose(); // نقرة على الخلفية
         }}
-        className="sanad-drawer fixed inset-y-0 start-0 m-0 h-dvh max-h-none w-80 max-w-[85vw] border-e border-border bg-bg p-0 text-text shadow-md backdrop:bg-text/40 lg:hidden"
+        className="sanad-drawer fixed inset-y-0 start-0 m-0 h-dvh max-h-none w-80 max-w-[85vw] border-e border-border bg-bg p-0 pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] text-text shadow-md backdrop:bg-text/40 lg:hidden"
       >
         {/* الغلاف يمنع اعتبار النقر داخل اللوحة نقرًا على الخلفية */}
         <div className="h-full">

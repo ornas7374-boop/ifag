@@ -29,7 +29,7 @@ export function ChatHeader({
 
   return (
     <header className="shrink-0 border-b border-border/70 bg-bg">
-      <div className="flex h-14 items-center justify-between gap-2 px-2 sm:h-16 sm:px-4">
+      <div className="flex h-14 items-center justify-between gap-2 px-2 sm:h-16 sm:px-4 short:h-12">
         <div className="flex min-w-0 items-center gap-1">
           {/* الجوال: فتح الـ Drawer */}
           <button

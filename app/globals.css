@@ -5,6 +5,9 @@
 @source not "../.agents";
 @source not "../.claude";
 
+/* شاشات قصيرة (الجوال أفقيًا): تخطيط مضغوط عموديًا. */
+@custom-variant short (@media (max-height: 500px));
+
 /*
  * ★ مصدر الحقيقة الوحيد للـ design tokens ★
  *

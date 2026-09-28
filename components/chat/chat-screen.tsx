@@ -111,7 +111,10 @@ export function ChatScreen() {
   const showScrollButton = messageCount > 0 && !atBottom;
 
   return (
-    <div className="flex h-dvh">
+    <div
+      // safe-area: المساحات حول الـ notch وشريط المنزل (فيزيائية بطبيعتها).
+      className="flex h-dvh pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
+    >
       <Sidebar
         conversations={conversations}
         currentId={currentId}
@@ -188,7 +191,7 @@ export function ChatScreen() {
           )}
         </main>
 
-        <div className="relative shrink-0 bg-bg px-4 pb-3 pt-2 sm:px-6">
+        <div className="relative shrink-0 bg-bg px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] short:pt-1 short:pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-6">
           <div className="mx-auto max-w-reading">
             {/* تطفو فوق الـ composer ولا تغيّر ارتفاعه: لا قفزات في التخطيط عند ظهورها. */}
             {(busy || showScrollButton) && (

@@ -168,13 +168,13 @@ for (const vp of [VIEWPORTS[0], VIEWPORTS[1]]) {
     await toggle.click();
     await expect(drawer(page)).toBeVisible();
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(await root()).toBe("hidden");
+    await expect.poll(root).toBe("hidden");
 
     // Esc — ويعود التركيز لزر الفتح
     await page.keyboard.press("Escape");
     await expect(drawer(page)).toBeHidden();
     await expect(toggle).toBeFocused();
-    expect(await root()).toBe("");
+    await expect.poll(root).toBe(""); // يُعاد بعد render واحد من الإغلاق
 
     // النقر خارجها (على الخلفية، يسار الـ Drawer في RTL)
     await toggle.click();
