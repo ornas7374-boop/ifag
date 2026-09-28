@@ -1,5 +1,3 @@
-import { site } from "@/lib/site";
-
 import {
   AIProviderError,
   type AIProvider,
@@ -10,36 +8,47 @@ import {
 } from "./types";
 
 /**
- * مزوّد تجريبي يحاكي الذكاء الاصطناعي (PHASE 2–6).
+ * مزوّد تجريبي يحاكي الذكاء الاصطناعي مع البحث في الإنترنت (حتى PHASE 8).
  *
- * قاعدة المصدر: كل ما يمثّل فتوى أو مصدرًا هنا placeholder صريح بين أقواس،
- * والرابط هو الصفحة الرئيسية للموقع الرسمي فقط (لا روابط فتاوى مختلَقة).
+ * قاعدة المصدر: كل ما يمثّل إجابة أو مصدرًا هنا placeholder صريح بين أقواس،
+ * والروابط على example.com (نطاق محجوز للأمثلة) — لا روابط مختلَقة لمواقع حقيقية.
  *
  * أوامر الاختبار داخل نص الرسالة:
  * - `#error`      خطأ في كل محاولة.
  * - `#error-once` خطأ في المحاولة الأولى فقط، ثم تنجح إعادة المحاولة.
- * - `#nosource`   حالة "لم توجد فتوى".
+ * - `#nosource`   حالة "لم أجد مصادر كافية".
+ * - `#religious`  سؤال شرعي — خارج اختصاص سَنَد.
  */
 
-const PLACEHOLDER_SOURCE: Source = {
-  id: "mock-source-1",
-  title: "[عنوان الفتوى]",
-  sourceLabel: "[اسم المصدر]",
-  volume: "[الجزء]",
-  page: "[الصفحة]",
-  url: site.source.url,
-};
+const PLACEHOLDER_SOURCES: Source[] = [
+  {
+    id: "mock-source-1",
+    title: "[عنوان الصفحة الأولى]",
+    sourceLabel: "[اسم الموقع]",
+    volume: null,
+    page: null,
+    url: "https://example.com/source-1",
+  },
+  {
+    id: "mock-source-2",
+    title: "[عنوان الصفحة الثانية]",
+    sourceLabel: "[اسم الموقع]",
+    volume: null,
+    page: null,
+    url: "https://example.com/source-2",
+  },
+];
 
 /** رد تجريبي يستعرض كل أنواع الأجزاء وعناصر الـ Markdown المدعومة. */
 const PLACEHOLDER_PARTS: MessagePart[] = [
   {
     type: "text",
-    text: "**[سطر تمهيدي تجريبي]** يظهر هنا عند الحاجة، قبل نص الفتوى.",
+    text: "**[إجابة تجريبية]** ستظهر هنا إجابة سَنَد عن سؤالك، مجمّعة من المصادر.",
   },
   {
     type: "quote",
-    sourceId: PLACEHOLDER_SOURCE.id,
-    text: "[إجابة تجريبية — ستُعرض هنا فتوى الشيخ ابن باز بنصها ورابطها]",
+    sourceId: "mock-source-1",
+    text: "[اقتباس تجريبي — يظهر هنا نص منقول حرفيًا من أحد المصادر]",
   },
   {
     type: "text",
@@ -49,7 +58,7 @@ const PLACEHOLDER_PARTS: MessagePart[] = [
       "- [نقطة تجريبية أولى]",
       "- [نقطة تجريبية ثانية]",
       "",
-      "> [اقتباس تجريبي لعرض التنسيق]",
+      "> [ملاحظة تجريبية بصيغة اقتباس]",
     ].join("\n"),
   },
 ];
@@ -89,8 +98,13 @@ export class MockProvider implements AIProvider {
       yield { type: "done" };
       return;
     }
+    if (question.includes("#religious")) {
+      yield { type: "out-of-scope" };
+      yield { type: "done" };
+      return;
+    }
 
-    yield { type: "sources", sources: [PLACEHOLDER_SOURCE] };
+    yield { type: "sources", sources: PLACEHOLDER_SOURCES };
 
     for (const part of PLACEHOLDER_PARTS) {
       yield {

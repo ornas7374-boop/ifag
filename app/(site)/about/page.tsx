@@ -3,9 +3,7 @@ import { Minus } from "lucide-react";
 
 import { HowItWorksSteps } from "@/components/about/how-it-works";
 import { DisclaimerNote } from "@/components/layout/disclaimer-note";
-import { ButtonLink } from "@/components/ui/button";
 import { ar } from "@/lib/content/ar";
-import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: ar.about.metaTitle,
@@ -42,18 +40,6 @@ export default function AboutPage() {
         <Section id="how-it-works" title={ar.howItWorks.title}>
           <div className="pt-2">
             <HowItWorksSteps />
-          </div>
-        </Section>
-
-        <Section id="source" title={t.sourceTitle}>
-          <p>{t.sourceBody}</p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2">
-            <ButtonLink href={site.source.url} external variant="secondary">
-              {t.sourceCta}
-            </ButtonLink>
-            <span dir="ltr" className="text-sm text-text-subtle">
-              {site.source.domain}
-            </span>
           </div>
         </Section>
 

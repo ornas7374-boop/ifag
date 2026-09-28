@@ -1,7 +1,6 @@
 import { LogoMark } from "@/components/layout/logo";
 import { ar } from "@/lib/content/ar";
 import { suggestedQuestions } from "@/lib/content/suggested-questions";
-import { site } from "@/lib/site";
 
 export function EmptyState({ onPick, disabled }: { onPick: (question: string) => void; disabled: boolean }) {
   const t = ar.chat;
@@ -28,10 +27,6 @@ export function EmptyState({ onPick, disabled }: { onPick: (question: string) =>
           </li>
         ))}
       </ul>
-
-      <p data-testid="independence" className="mt-8 text-xs text-text-subtle">
-        {site.independence}
-      </p>
     </div>
   );
 }

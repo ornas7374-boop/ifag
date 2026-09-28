@@ -5,31 +5,31 @@
  * PHASE 8 يطبّق نفس AIProvider دون تعديل أي مكوّن.
  */
 
-/** مصدر فتوى. الجزء والصفحة null إن لم يذكرهما المصدر — ممنوع التخمين. */
+/** مصدر ويب. الجزء والصفحة للمصادر المطبوعة فقط، وإلا null — ممنوع التخمين. */
 export type Source = {
   id: string;
-  /** عنوان الفتوى */
+  /** عنوان الصفحة */
   title: string;
-  /** مثل: نور على الدرب / مجموع الفتاوى */
+  /** اسم الموقع أو الناشر */
   sourceLabel: string;
   volume: string | null;
   page: string | null;
-  /** رابط الصفحة الأصلية في binbaz.org.sa */
+  /** رابط الصفحة الأصلية */
   url: string;
 };
 
 /**
  * رد المساعد مكوّن من أجزاء:
  * - `text`: نص مولَّد (سطر تمهيدي، ملخص…) يُعرض كـ Markdown.
- * - `quote`: نص الفتوى حرفيًا، مرتبط بمصدره، يُعرض كما هو بالخط النسخي.
- * الفصل بينهما يسمح في PHASE 8 بعرض نص الفتوى من قاعدة البيانات مباشرة
+ * - `quote`: اقتباس حرفي من مصدر، مرتبط به، يُعرض كما هو (بلا Markdown).
+ * الفصل بينهما يسمح بعرض الاقتباس من نص الصفحة المسترجعة مباشرة
  * فتكون الحرفية مضمونة بالتصميم.
  */
 export type MessagePart =
   | { type: "text"; text: string }
   | { type: "quote"; text: string; sourceId: string };
 
-export type AssistantStatus = "streaming" | "done" | "stopped" | "error" | "no-source";
+export type AssistantStatus = "streaming" | "done" | "stopped" | "error" | "no-source" | "out-of-scope";
 
 export type UserMessage = {
   id: string;
@@ -54,7 +54,8 @@ export type ChatMessage = UserMessage | AssistantMessage;
 /**
  * أحداث البث. الترتيب المتوقع:
  * sources ← (part-start ← delta…)… ← done
- * أو: no-source ← done
+ * أو: no-source ← done  (لم توجد مصادر كافية)
+ * أو: out-of-scope ← done  (سؤال شرعي/فتوى — خارج اختصاص سَنَد)
  * المصادر تصل أولًا حتى لا يظهر أي نص بلا مصدره، حتى لو أُوقف التوليد.
  */
 export type StreamEvent =
@@ -62,6 +63,7 @@ export type StreamEvent =
   | { type: "part-start"; part: { type: "text" } | { type: "quote"; sourceId: string } }
   | { type: "delta"; text: string }
   | { type: "no-source" }
+  | { type: "out-of-scope" }
   | { type: "done" };
 
 export type AIErrorKind = "network" | "timeout" | "server" | "unknown";

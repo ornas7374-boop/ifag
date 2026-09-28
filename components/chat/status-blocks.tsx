@@ -1,27 +1,79 @@
-import { CircleAlert, RotateCcw, SearchX } from "lucide-react";
+import { CircleAlert, RotateCcw, SearchX, ShieldQuestion } from "lucide-react";
 
 import { buttonClasses } from "@/components/ui/button";
 import { ar } from "@/lib/content/ar";
 
-/** حالة "لم توجد فتوى": هادئة ومعلوماتية، لا بشكل خطأ. */
-export function NoSourceState() {
-  const t = ar.chat;
+/** حالة معلوماتية هادئة (لا بشكل خطأ). */
+function InfoState({
+  testId,
+  icon: Icon,
+  title,
+  body,
+  hint,
+}: {
+  testId: string;
+  icon: typeof SearchX;
+  title: string;
+  body: string;
+  hint: string;
+}) {
   return (
-    <div data-testid="no-source" className="rounded-md border border-primary/15 bg-primary-soft p-4">
+    <div
+      data-testid={testId}
+      className="rounded-md border border-primary/15 bg-primary-soft p-4"
+    >
       <p className="flex items-center gap-2 font-semibold text-primary">
-        <SearchX aria-hidden="true" className="size-4 shrink-0" />
-        {t.noSourceTitle}
+        <Icon aria-hidden="true" className="size-4 shrink-0" />
+        {title}
       </p>
-      <p className="mt-2 text-text">{t.noSourceBody}</p>
-      <p className="mt-1 text-sm text-text-muted">{t.noSourceHint}</p>
+      <p className="mt-2 text-text">{body}</p>
+      <p className="mt-1 text-sm text-text-muted">{hint}</p>
     </div>
   );
 }
 
-export function ErrorState({ onRetry, disabled }: { onRetry: () => void; disabled?: boolean }) {
+/** لم توجد مصادر كافية للإجابة. */
+export function NoSourceState() {
   const t = ar.chat;
   return (
-    <div data-testid="error-state" role="alert" className="rounded-md border border-danger/25 bg-surface p-4">
+    <InfoState
+      testId="no-source"
+      icon={SearchX}
+      title={t.noSourceTitle}
+      body={t.noSourceBody}
+      hint={t.noSourceHint}
+    />
+  );
+}
+
+/** سؤال شرعي أو فتوى — خارج اختصاص سَنَد. */
+export function OutOfScopeState() {
+  const t = ar.chat;
+  return (
+    <InfoState
+      testId="out-of-scope"
+      icon={ShieldQuestion}
+      title={t.outOfScopeTitle}
+      body={t.outOfScopeBody}
+      hint={t.outOfScopeHint}
+    />
+  );
+}
+
+export function ErrorState({
+  onRetry,
+  disabled,
+}: {
+  onRetry: () => void;
+  disabled?: boolean;
+}) {
+  const t = ar.chat;
+  return (
+    <div
+      data-testid="error-state"
+      role="alert"
+      className="rounded-md border border-danger/25 bg-surface p-4"
+    >
       <p className="flex items-center gap-2 font-semibold text-danger">
         <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
         {t.errorTitle}

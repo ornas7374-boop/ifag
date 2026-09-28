@@ -3,7 +3,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import { ar } from "@/lib/content/ar";
 
 /**
- * Markdown للنص المولَّد فقط (لا لنص الفتوى — ذاك يُعرض حرفيًا).
+ * Markdown للنص المولَّد فقط (لا للاقتباس — ذاك يُعرض حرفيًا).
  * آمن افتراضيًا: react-markdown لا يعرض HTML خام.
  * الحجم الأدنى للعناوين عمدًا: الرد جزء من محادثة لا صفحة مقال.
  */

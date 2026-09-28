@@ -72,7 +72,6 @@
 
   /* الخطوط: العائلة العربية أولًا ثم اللاتينية لنفس الخط. */
   --font-sans: var(--font-plex-ar), var(--font-plex-latin), system-ui, sans-serif;
-  --font-naskh: var(--font-naskh-ar), var(--font-naskh-latin), serif;
 }
 
 @theme {
@@ -93,11 +92,6 @@
   --text-3xl--line-height: 1.3;
   --text-display: clamp(2rem, 1.35rem + 2.8vw, 3rem); /* 32 → 48 */
   --text-display--line-height: 1.25;
-  /* نص الفتاوى بالخط النسخي: 17 على الجوال، 18 من 640px */
-  --text-reading: 1.0625rem;
-  --text-reading--line-height: 2;
-  --text-reading-lg: 1.125rem;
-  --text-reading-lg--line-height: 2;
 
   /* ── المسافات: مقياس 4px (p-1 = 4px … p-32 = 128px) ── */
   --spacing: 0.25rem;

@@ -107,7 +107,7 @@ export function useChat() {
         await updateAssistant(
           conversationId,
           assistantId,
-          (m) => ({ ...m, status: m.status === "no-source" ? "no-source" : "done" }),
+          (m) => ({ ...m, status: m.status === "streaming" ? "done" : m.status }),
           { persist: "now" },
         );
       } catch (error) {

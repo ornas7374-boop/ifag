@@ -24,6 +24,9 @@ export function applyStreamEvent(message: AssistantMessage, event: StreamEvent):
     case "no-source":
       return { ...message, parts: [], sources: [], status: "no-source" };
 
+    case "out-of-scope":
+      return { ...message, parts: [], sources: [], status: "out-of-scope" };
+
     case "done":
       return message;
   }

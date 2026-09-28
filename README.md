@@ -1,10 +1,9 @@
 # سَنَد
 
-مساعد بحث مستقل لطلبة العلم، يجيب عن الأسئلة الشرعية اعتمادًا حصريًا على فتاوى سماحة الشيخ
-عبدالعزيز بن باز رحمه الله المنشورة في موقعه الرسمي [binbaz.org.sa](https://binbaz.org.sa)،
-ويعرض نص الفتوى كما هو مع رابط صفحتها الأصلية.
+مساعد ذكي عربي (مثل ChatGPT وClaude) يجيب عن أسئلتك العامة بالبحث في الإنترنت،
+ويضع روابط المصادر مع كل إجابة. لا يجيب عن المسائل الشرعية والفتاوى.
 
-> المساعد أداة للبحث في فتاوى الشيخ ابن باز رحمه الله، وليس مفتيًا، ولا يغني عن سؤال أهل العلم في حالتك بعينها.
+> سَنَد يبحث في الإنترنت وقد يخطئ. تحقّق من المعلومات المهمة من مصادرها.
 
 - قواعد المشروع: [`CLAUDE.md`](CLAUDE.md)
 - مواصفات المراحل: [`PHASES.md`](PHASES.md)
@@ -28,12 +27,12 @@ npm run test:e2e  # Playwright على بناء الإنتاج — screenshots ف
 
 ## أوامر الـ Mock (للتطوير)
 
-اكتب داخل السؤال: `#error` (خطأ) · `#error-once` (خطأ ثم نجاح عند إعادة المحاولة) · `#nosource` (لم توجد فتوى).
+اكتب داخل السؤال: `#error` (خطأ) · `#error-once` (خطأ ثم نجاح عند إعادة المحاولة) · `#nosource` (لم أجد مصادر) · `#religious` (خارج الاختصاص).
 
 ## التقنيات
 
 Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind CSS v4 · lucide-react ·
-IBM Plex Sans Arabic + Noto Naskh Arabic (محلية عبر next/font/local) · Playwright
+IBM Plex Sans Arabic (محلي عبر next/font/local) · Playwright
 
 ## البنية
 
@@ -52,7 +51,7 @@ lib/
   ai/            ★ AIProvider (العقد) + MockProvider
   store/         ★ ConversationStore (localStorage الآن)
   chat/          useChat: الإرسال، البث، الإيقاف، إعادة المحاولة، الحفظ
-  site.ts        ★ النصوص المعتمدة حرفيًا (التنبيه، الاستقلالية، رابط المصدر)
+  site.ts        ★ الاسم والتنبيه الثابت
   content/ar.ts  ★ كل نصوص الواجهة
 tests/e2e/       اختبارات Playwright لكل مرحلة
 screenshots/     صور المراجعة لكل مرحلة

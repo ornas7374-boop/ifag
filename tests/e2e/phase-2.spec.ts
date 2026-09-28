@@ -13,9 +13,9 @@ import {
 } from "./helpers";
 
 const SHOTS = "screenshots/phase-2";
-const QUESTION = "ما حكم الجمع بين الصلاتين للمسافر؟";
-const PLACEHOLDER_ANSWER = "[إجابة تجريبية — ستُعرض هنا فتوى الشيخ ابن باز بنصها ورابطها]";
-const NO_SOURCE_TEXT = "لم أجد للشيخ ابن باز رحمه الله فتوى في هذه المسألة ضمن المصادر المتاحة.";
+const QUESTION = "ما الفرق بين الذكاء الاصطناعي والتعلّم الآلي؟";
+const PLACEHOLDER_QUOTE = "[اقتباس تجريبي — يظهر هنا نص منقول حرفيًا من أحد المصادر]";
+const NO_SOURCE_TEXT = "لم أجد في الإنترنت مصادر موثوقة تكفي للإجابة عن هذا السؤال.";
 
 const input = (page: Page) => page.locator("#chat-input");
 const sendButton = (page: Page) => page.getByRole("button", { name: "إرسال" });
@@ -52,7 +52,6 @@ for (const vp of VIEWPORTS) {
     // الشاشة الفارغة + النصوص المعتمدة حرفيًا
     await expect(page.getByTestId("suggestion")).toHaveCount(4);
     await expect(page.getByTestId("disclaimer")).toHaveText(site.disclaimer);
-    await expect(page.getByTestId("independence")).toHaveText(site.independence);
     await shot("empty");
 
     // مربع كتابة متعدد الأسطر
@@ -64,17 +63,17 @@ for (const vp of VIEWPORTS) {
     await ask(page, QUESTION);
     await expect(page.getByTestId("waiting")).toBeVisible();
     await shot("waiting");
-    await expect(page.locator("[data-part=quote]")).toContainText("إجابة");
+    await expect(page.locator("[data-part=quote]")).toContainText("اقتباس");
     await expect(page.getByTestId("stop")).toBeVisible();
     await shot("streaming");
     await waitStatus(page, "done");
-    await page.getByTestId("source-card").scrollIntoViewIfNeeded();
+    await page.getByTestId("source-card").last().scrollIntoViewIfNeeded();
     await shot("answer");
 
     // إيقاف
     await newChat(page);
     await ask(page, QUESTION);
-    await expect(page.locator("[data-part=quote]")).toContainText("إجابة");
+    await expect(page.locator("[data-part=quote]")).toContainText("اقتباس");
     await page.getByTestId("stop").click();
     await waitStatus(page, "stopped");
     await shot("stopped");
@@ -85,11 +84,17 @@ for (const vp of VIEWPORTS) {
     await expect(page.getByTestId("error-state")).toBeVisible({ timeout: 10_000 });
     await shot("error");
 
-    // لم توجد فتوى
+    // لم أجد مصادر
     await newChat(page);
     await ask(page, "سؤال تجريبي #nosource");
     await expect(page.getByTestId("no-source")).toBeVisible({ timeout: 10_000 });
     await shot("nosource");
+
+    // سؤال شرعي — خارج الاختصاص
+    await newChat(page);
+    await ask(page, "سؤال تجريبي #religious");
+    await expect(page.getByTestId("out-of-scope")).toBeVisible({ timeout: 10_000 });
+    await shot("out-of-scope");
 
     // صفحة /about بقسم "كيف يعمل" الجديد
     await page.goto("/about", { waitUntil: "networkidle" });
@@ -187,7 +192,7 @@ test("textarea grows up to ~6 lines then scrolls internally", async ({ page }) =
 test("stop generation keeps the partial answer and its source", async ({ page }) => {
   await page.goto("/");
   await ask(page, QUESTION);
-  await expect(page.locator("[data-part=quote]")).toContainText("إجابة");
+  await expect(page.locator("[data-part=quote]")).toContainText("اقتباس");
   await page.getByTestId("stop").click();
   await waitStatus(page, "stopped");
   await expect(page.getByTestId("stopped")).toHaveText("أُوقف التوليد.");
@@ -196,7 +201,7 @@ test("stop generation keeps the partial answer and its source", async ({ page })
   const length = await lastAssistant(page).innerText();
   await page.waitForTimeout(700);
   expect(await lastAssistant(page).innerText()).toBe(length);
-  await expect(page.getByTestId("source-card")).toHaveCount(1); // لا نص بلا مصدر
+  await expect(page.getByTestId("source-card")).toHaveCount(2); // لا نص بلا مصادره
 });
 
 test("#error shows an error with retry; retry re-runs the request", async ({ page }) => {
@@ -216,7 +221,7 @@ test("#error-once: retry recovers with a full answer", async ({ page }) => {
   await page.getByRole("button", { name: "إعادة المحاولة" }).click();
   await expect(input(page)).toBeFocused();
   await waitStatus(page, "done");
-  await expect(page.getByTestId("source-card")).toHaveCount(1);
+  await expect(page.getByTestId("source-card")).toHaveCount(2);
   await expect(page.getByTestId("error-state")).toHaveCount(0);
 });
 
@@ -229,43 +234,52 @@ test("#nosource shows the calm no-fatwa state without a source card", async ({ p
   await expect(page.getByTestId("no-source")).not.toHaveAttribute("role", "alert");
 });
 
+test("#religious: religious questions are declined calmly", async ({ page }) => {
+  await page.goto("/");
+  await ask(page, "سؤال تجريبي #religious");
+  await waitStatus(page, "out-of-scope");
+  await expect(page.getByTestId("out-of-scope")).toContainText("خارج اختصاص سَنَد");
+  await expect(page.getByTestId("source-card")).toHaveCount(0);
+});
+
 // ── 4) المحتوى والعرض ──
-test("answer: fatwa text in Naskh, Markdown rendered, source card complete", async ({ page }) => {
+test("answer: verbatim quote, Markdown rendered, source cards complete", async ({ page }) => {
   await page.goto("/");
   await ask(page, QUESTION);
   await waitStatus(page, "done");
   await waitForFonts(page);
 
   const quote = page.locator("[data-part=quote]");
-  await expect(quote).toHaveText(PLACEHOLDER_ANSWER);
-  expect(await quote.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/naskh/i);
+  await expect(quote).toHaveText(PLACEHOLDER_QUOTE);
 
   const answer = lastAssistant(page);
   await expect(answer.locator("strong")).toHaveCount(1);
   await expect(answer.locator("h3")).toHaveCount(1);
   await expect(answer.locator("ul li")).toHaveCount(2);
-  await expect(answer.locator("blockquote")).toHaveCount(1);
+  await expect(answer.locator("blockquote")).toHaveCount(2); // الاقتباس الحرفي + اقتباس Markdown
 
-  const card = page.getByTestId("source-card");
-  await expect(card).toContainText("[عنوان الفتوى]");
-  await expect(card).toContainText("[اسم المصدر]");
-  await expect(card).toContainText("الجزء [الجزء]، الصفحة [الصفحة]");
+  const cards = page.getByTestId("source-card");
+  await expect(cards).toHaveCount(2);
+  await expect(cards.first()).toContainText("[عنوان الصفحة الأولى]");
+  await expect(cards.first()).toContainText("[اسم الموقع]");
+  await expect(cards.first()).toContainText("example.com");
+  await expect(answer.getByText("المصادر", { exact: true })).toBeVisible();
 });
 
 test("source link opens the original page in a new tab", async ({ page, context }) => {
   await page.goto("/");
   await ask(page, QUESTION);
   await waitStatus(page, "done");
-  const link = page.getByRole("link", { name: /اقرأ الفتوى كاملة/ });
+  const link = page.getByRole("link", { name: /افتح المصدر/ }).first();
   await expect(link).toHaveAttribute("target", "_blank");
   await expect(link).toHaveAttribute("rel", /noopener/);
-  await expect(link).toHaveAttribute("href", site.source.url);
+  await expect(link).toHaveAttribute("href", "https://example.com/source-1");
 
   const requested: string[] = [];
   context.on("request", (r) => requested.push(r.url()));
   const [popup] = await Promise.all([page.waitForEvent("popup"), link.click()]);
   await popup.waitForTimeout(500);
-  expect(requested.some((u) => u.startsWith(site.source.url))).toBe(true);
+  expect(requested.some((u) => u.startsWith("https://example.com/source-1"))).toBe(true);
   expect(page.url()).toMatch(/\/$/); // الصفحة الأصلية لم تتغيّر
 });
 
@@ -284,8 +298,8 @@ test("refresh keeps the conversation", async ({ page }) => {
   await page.reload();
   await expect(page.getByTestId("user-message")).toHaveText(QUESTION);
   await expect(lastAssistant(page)).toHaveAttribute("data-status", "done");
-  await expect(page.locator("[data-part=quote]")).toHaveText(PLACEHOLDER_ANSWER);
-  await expect(page.getByTestId("source-card")).toHaveCount(1);
+  await expect(page.locator("[data-part=quote]")).toHaveText(PLACEHOLDER_QUOTE);
+  await expect(page.getByTestId("source-card")).toHaveCount(2);
 });
 
 test("refresh mid-stream recovers the answer as stopped", async ({ page }) => {

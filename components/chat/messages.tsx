@@ -5,7 +5,7 @@ import { ar } from "@/lib/content/ar";
 
 import { Markdown } from "./markdown";
 import { SourceCard } from "./source-card";
-import { ErrorState, NoSourceState } from "./status-blocks";
+import { ErrorState, NoSourceState, OutOfScopeState } from "./status-blocks";
 
 export function UserMessage({ message }: { message: UserMessageType }) {
   return (
@@ -20,7 +20,7 @@ export function UserMessage({ message }: { message: UserMessageType }) {
 
 /**
  * رد المساعد على "سلسلة الإسناد" نفسها في الشعار: الحلقة الأولى سَنَد،
- * والأخيرة بطاقة المصدر. لا يُعرض أي نص إلا ومصدره تحته.
+ * والأخيرة بطاقات المصادر. لا يُعرض أي نص إلا ومصادره تحته.
  */
 export function AssistantMessage({
   message,
@@ -61,13 +61,13 @@ export function AssistantMessage({
 
           {message.parts.map((part, i) =>
             part.type === "quote" ? (
-              <p
+              <blockquote
                 key={i}
                 data-part="quote"
-                className="font-naskh text-reading whitespace-pre-line text-text [overflow-wrap:anywhere] sm:text-reading-lg"
+                className="border-s-2 border-accent/60 ps-4 whitespace-pre-line text-text [overflow-wrap:anywhere]"
               >
                 {part.text}
-              </p>
+              </blockquote>
             ) : (
               <div key={i} data-part="text">
                 <Markdown>{part.text}</Markdown>
@@ -81,6 +81,7 @@ export function AssistantMessage({
             </p>
           )}
           {message.status === "no-source" && <NoSourceState />}
+          {message.status === "out-of-scope" && <OutOfScopeState />}
           {message.status === "error" && <ErrorState onRetry={onRetry} disabled={!canRetry} />}
         </div>
       </div>
@@ -91,11 +92,16 @@ export function AssistantMessage({
             <span aria-hidden="true" className="h-5 w-px bg-border-strong" />
             <span aria-hidden="true" className="size-3 rounded-full bg-accent ring-4 ring-accent-soft" />
           </div>
-          <div className="min-w-0 space-y-3">
-            {message.sources.map((source) => (
-              <SourceCard key={source.id} source={source} />
-            ))}
-          </div>
+          <section aria-label={message.sources.length > 1 ? t.sourcesHeading : t.sourceHeading} className="min-w-0">
+            <p className="text-xs font-semibold text-accent">
+              {message.sources.length > 1 ? t.sourcesHeading : t.sourceHeading}
+            </p>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              {message.sources.map((source, i) => (
+                <SourceCard key={source.id} source={source} index={i + 1} />
+              ))}
+            </div>
+          </section>
         </>
       )}
     </article>

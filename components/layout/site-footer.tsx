@@ -3,7 +3,6 @@ import Link from "next/link";
 import { DisclaimerNote } from "@/components/layout/disclaimer-note";
 import { LogoMark } from "@/components/layout/logo";
 import { ar } from "@/lib/content/ar";
-import { site } from "@/lib/site";
 
 const footerLink =
   "inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-text-muted " +
@@ -16,10 +15,6 @@ export function SiteFooter() {
       <div className="mx-auto max-w-content px-4 py-10 sm:px-6 lg:px-8">
         <DisclaimerNote className="max-w-reading" />
 
-        <p data-testid="independence" className="mt-4 max-w-reading text-sm text-text-muted">
-          {site.independence}
-        </p>
-
         <div className="mt-8 flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <nav aria-label={ar.a11y.footerNav}>
             <ul className="flex flex-wrap items-center gap-x-6">
@@ -27,12 +22,6 @@ export function SiteFooter() {
                 <Link href="/about" className={footerLink}>
                   {ar.nav.about}
                 </Link>
-              </li>
-              <li>
-                <a href={site.source.url} target="_blank" rel="noopener noreferrer" className={footerLink}>
-                  {ar.footer.officialSite}
-                  <span className="sr-only"> {ar.a11y.opensInNewTab}</span>
-                </a>
               </li>
             </ul>
           </nav>

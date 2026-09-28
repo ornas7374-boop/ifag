@@ -28,7 +28,6 @@ for (const vp of VIEWPORTS) {
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.locator("html")).toHaveAttribute("lang", "ar");
     await expect(page.getByTestId("disclaimer").first()).toHaveText(site.disclaimer);
-    await expect(page.getByTestId("independence")).toHaveText(site.independence);
     await expectNoHorizontalScroll(page);
     expect(issues, JSON.stringify(issues, null, 2)).toEqual([]);
   });
@@ -45,9 +44,7 @@ test("about: every link resolves", async ({ page, request }) => {
     } else if (link.href.startsWith("/")) {
       expect((await request.get(link.href)).status(), link.href).toBe(200);
     } else {
-      expect(link.href).toBe(site.source.url);
-      expect(link.target).toBe("_blank");
-      expect(link.rel).toContain("noopener");
+      throw new Error(`unexpected external link on /about: ${link.href}`);
     }
   }
 });
