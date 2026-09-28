@@ -1,6 +1,7 @@
 import { CircleAlert, RotateCcw, SearchX, ShieldQuestion } from "lucide-react";
 
 import { buttonClasses } from "@/components/ui/button";
+import type { AIErrorKind } from "@/lib/ai/types";
 import { ar } from "@/lib/content/ar";
 
 /** حالة معلوماتية هادئة (لا بشكل خطأ). */
@@ -61,24 +62,28 @@ export function OutOfScopeState() {
 }
 
 export function ErrorState({
+  kind = "unknown",
   onRetry,
   disabled,
 }: {
+  kind?: AIErrorKind;
   onRetry: () => void;
   disabled?: boolean;
 }) {
   const t = ar.chat;
+  const copy = t.errors[kind];
   return (
     <div
       data-testid="error-state"
+      data-kind={kind}
       role="alert"
       className="rounded-md border border-danger/25 bg-surface p-4"
     >
       <p className="flex items-center gap-2 font-semibold text-danger">
         <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
-        {t.errorTitle}
+        {copy.title}
       </p>
-      <p className="mt-1 text-sm text-text-muted">{t.errorBody}</p>
+      <p className="mt-1 text-sm text-text-muted">{copy.body}</p>
       <button
         type="button"
         onClick={onRetry}

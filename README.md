@@ -27,7 +27,9 @@ npm run test:e2e  # Playwright على بناء الإنتاج — screenshots ف
 
 ## أوامر الـ Mock (للتطوير)
 
-اكتب داخل السؤال: `#error` (خطأ) · `#error-once` (خطأ ثم نجاح عند إعادة المحاولة) · `#nosource` (لم أجد مصادر) · `#religious` (خارج الاختصاص).
+اكتب داخل السؤال: `#error` (خطأ) · `#error-once` (خطأ ثم نجاح عند إعادة المحاولة) · `#nosource` (لم أجد مصادر) · `#religious` (خارج الاختصاص) · `#long` (رد طويل جدًا) · `#timeout` · `#offline`.
+
+كل الحالات في صفحة واحدة: `/dev/states` (في `pnpm dev`، أو مع `SANAD_DEV_STATES=1`).
 
 ## التقنيات
 

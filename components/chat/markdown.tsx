@@ -36,6 +36,12 @@ const components: Components = {
     </code>
   ),
   hr: () => <hr className="my-5 border-border" />,
+  // الأسطر الطويلة تُمرَّر داخل الكتلة نفسها، لا في الصفحة.
+  pre: ({ children }) => (
+    <pre dir="ltr" className="mt-3 overflow-x-auto rounded-md bg-surface-muted p-3 text-sm [&_code]:bg-transparent [&_code]:p-0">
+      {children}
+    </pre>
+  ),
 };
 
 export function Markdown({ children }: { children: string }) {

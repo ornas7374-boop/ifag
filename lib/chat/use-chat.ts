@@ -106,6 +106,10 @@ export function useChat() {
       setStatus("waiting");
 
       try {
+        // دون اتصال: خطأ شبكة واضح فورًا بدل انتظار مهلة الطلب.
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          throw new AIProviderError("network", "Browser is offline");
+        }
         for await (const event of getProvider().ask({ messages: history, signal: controller.signal })) {
           if (event.type === "delta") setStatus("streaming");
           await updateAssistant(conversationId, assistantId, (m) => applyStreamEvent(m, event), {

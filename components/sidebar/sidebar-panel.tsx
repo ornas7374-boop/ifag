@@ -9,6 +9,8 @@ import { ar } from "@/lib/content/ar";
 import type { ConversationSummary } from "@/lib/store";
 import { normalizeForSearch } from "@/lib/text/normalize";
 
+import { SidebarListSkeleton } from "@/components/chat/skeletons";
+
 import { ConversationItem } from "./conversation-item";
 
 export type SidebarActions = {
@@ -40,7 +42,9 @@ export function SidebarPanel({
 
   const visible = useMemo(() => {
     const q = normalizeForSearch(query);
-    return q ? conversations.filter((c) => normalizeForSearch(c.title).includes(q)) : conversations;
+    return q
+      ? conversations.filter((c) => normalizeForSearch(c.title).includes(q))
+      : conversations;
   }, [conversations, query]);
 
   return (
@@ -86,12 +90,19 @@ export function SidebarPanel({
         </div>
       </div>
 
-      <nav aria-label={t.listLabel} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <nav
+        aria-label={t.listLabel}
+        className="min-h-0 flex-1 overflow-y-auto px-2 pb-3"
+      >
+        {!isLoaded && <SidebarListSkeleton />}
         {isLoaded && conversations.length === 0 && (
           <p className="px-3 py-2 text-sm text-text-subtle">{t.empty}</p>
         )}
         {conversations.length > 0 && visible.length === 0 && (
-          <p data-testid="no-results" className="px-3 py-2 text-sm text-text-subtle">
+          <p
+            data-testid="no-results"
+            className="px-3 py-2 text-sm text-text-subtle"
+          >
             {t.noResults}
           </p>
         )}
@@ -117,7 +128,9 @@ export function SidebarPanel({
         >
           <Settings aria-hidden="true" className="size-4" />
           {t.settings}
-          <span className="ms-auto rounded-full bg-surface-muted px-2 py-0.5 text-xs">{t.soon}</span>
+          <span className="ms-auto rounded-full bg-surface-muted px-2 py-0.5 text-xs">
+            {t.soon}
+          </span>
         </button>
       </div>
     </div>

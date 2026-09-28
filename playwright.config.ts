@@ -16,11 +16,14 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     browserName: "chromium",
     locale: "ar-SA",
+    permissions: ["clipboard-read", "clipboard-write"],
   },
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
+    // صفحة /dev/states مغلقة في الإنتاج؛ تُفتح للاختبارات فقط.
+    env: { SANAD_DEV_STATES: "1" },
     timeout: 60_000,
   },
 });

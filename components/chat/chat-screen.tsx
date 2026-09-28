@@ -1,7 +1,13 @@
 "use client";
 
-import { Square } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDown, Square } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { ConfirmDialog } from "@/components/sidebar/confirm-dialog";
 import { Sidebar } from "@/components/sidebar/sidebar";
@@ -16,6 +22,7 @@ import { ChatHeader } from "./chat-header";
 import { Composer } from "./composer";
 import { EmptyState } from "./empty-state";
 import { AssistantMessage, UserMessage } from "./messages";
+import { ChatSkeleton } from "./skeletons";
 
 export function ChatScreen() {
   const t = ar.chat;
@@ -63,12 +70,45 @@ export function ChatScreen() {
     wasBusy.current = busy;
   }, [busy, focusInput]);
 
-  // عند إضافة رسالة جديدة: انزل لأسفل المحادثة.
-  // (المتابعة الذكية أثناء البث وزر "النزول للأسفل" في PHASE 4.)
-  useEffect(() => {
+  // ── المتابعة الذكية للتمرير ──
+  // نلتصق بأسفل المحادثة أثناء البث، إلا إذا صعد المستخدم ليقرأ؛ عندها نتوقف
+  // ويظهر زر "النزول لآخر المحادثة".
+  const stickRef = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
+
+  const onScroll = useCallback(() => {
     const el = scrollRef.current;
-    if (el && messageCount > 0) el.scrollTo({ top: el.scrollHeight });
-  }, [messageCount]);
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    stickRef.current = near;
+    setAtBottom(near);
+  }, []);
+
+  const scrollToBottom = useCallback((smooth: boolean) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickRef.current = true;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: smooth && !reduce ? "smooth" : "auto",
+    });
+  }, []);
+
+  // رسالة جديدة أو محادثة أخرى: التصق بالأسفل من جديد.
+  useLayoutEffect(() => {
+    if (messageCount > 0) scrollToBottom(false);
+  }, [messageCount, currentId, scrollToBottom]);
+
+  // كل تحديث للبث: تابع فقط إن كان المستخدم في الأسفل.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el && stickRef.current) el.scrollTop = el.scrollHeight;
+  }, [messages]);
+
+  const showScrollButton = messageCount > 0 && !atBottom;
 
   return (
     <div className="flex h-dvh">
@@ -110,8 +150,15 @@ export function ChatScreen() {
           onShowSidebar={() => setCollapsed(false)}
         />
 
-        <main ref={scrollRef} id="main" className="flex-1 overflow-y-auto">
-          {!isLoaded ? null : messageCount === 0 ? (
+        <main
+          ref={scrollRef}
+          onScroll={onScroll}
+          id="main"
+          className="flex-1 overflow-y-auto"
+        >
+          {!isLoaded ? (
+            <ChatSkeleton />
+          ) : messageCount === 0 ? (
             <EmptyState onPick={(q) => void send(q)} disabled={busy} />
           ) : (
             <>
@@ -119,7 +166,7 @@ export function ChatScreen() {
               <div
                 role="log"
                 aria-label={t.logLabel}
-                className="mx-auto max-w-reading space-y-8 px-4 py-8 sm:px-6"
+                className="mx-auto max-w-reading space-y-8 px-4 pt-8 pb-20 sm:px-6"
               >
                 {messages.map((m) =>
                   m.role === "user" ? (
@@ -141,28 +188,42 @@ export function ChatScreen() {
           )}
         </main>
 
-        <div className="shrink-0 bg-bg px-4 pb-3 pt-2 sm:px-6">
+        <div className="relative shrink-0 bg-bg px-4 pb-3 pt-2 sm:px-6">
           <div className="mx-auto max-w-reading">
-            {busy && (
-              <div className="mb-2 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    stop();
-                    focusInput();
-                  }}
-                  data-testid="stop"
-                  className={buttonClasses({
-                    variant: "secondary",
-                    className: "shadow-sm",
-                  })}
-                >
-                  <Square
-                    aria-hidden="true"
-                    className="size-3.5 fill-current"
-                  />
-                  {t.stop}
-                </button>
+            {/* تطفو فوق الـ composer ولا تغيّر ارتفاعه: لا قفزات في التخطيط عند ظهورها. */}
+            {(busy || showScrollButton) && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-full flex items-center justify-center gap-2 pb-2 [&>*]:pointer-events-auto">
+                {showScrollButton && (
+                  <button
+                    type="button"
+                    onClick={() => scrollToBottom(true)}
+                    aria-label={t.scrollToBottom}
+                    data-testid="scroll-to-bottom"
+                    className="flex size-11 items-center justify-center rounded-full border border-border-strong bg-surface text-text shadow-sm transition-colors hover:border-primary hover:text-primary"
+                  >
+                    <ArrowDown aria-hidden="true" className="size-5" />
+                  </button>
+                )}
+                {busy && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stop();
+                      focusInput();
+                    }}
+                    data-testid="stop"
+                    className={buttonClasses({
+                      variant: "secondary",
+                      className: "shadow-sm",
+                    })}
+                  >
+                    <Square
+                      aria-hidden="true"
+                      className="size-3.5 fill-current"
+                    />
+                    {t.stop}
+                  </button>
+                )}
               </div>
             )}
             <Composer busy={busy} onSend={send} inputRef={inputRef} />

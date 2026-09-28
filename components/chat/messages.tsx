@@ -3,9 +3,11 @@ import type { AssistantMessage as AssistantMessageType, UserMessage as UserMessa
 import { hasVisibleText } from "@/lib/chat/apply-event";
 import { ar } from "@/lib/content/ar";
 
+import { CopyButton } from "./copy-button";
 import { Markdown } from "./markdown";
 import { SourceCard } from "./source-card";
 import { ErrorState, NoSourceState, OutOfScopeState } from "./status-blocks";
+import { TypingIndicator } from "./typing-indicator";
 
 export function UserMessage({ message }: { message: UserMessageType }) {
   return (
@@ -54,9 +56,7 @@ export function AssistantMessage({
 
         <div className="mt-2 space-y-4">
           {isStreaming && !hasText && (
-            <p data-testid="waiting" className="text-sm text-text-muted">
-              {t.waiting}
-            </p>
+            <TypingIndicator />
           )}
 
           {message.parts.map((part, i) =>
@@ -82,7 +82,7 @@ export function AssistantMessage({
           )}
           {message.status === "no-source" && <NoSourceState />}
           {message.status === "out-of-scope" && <OutOfScopeState />}
-          {message.status === "error" && <ErrorState onRetry={onRetry} disabled={!canRetry} />}
+          {message.status === "error" && <ErrorState kind={message.errorKind} onRetry={onRetry} disabled={!canRetry} />}
         </div>
       </div>
 
@@ -103,6 +103,12 @@ export function AssistantMessage({
             </div>
           </section>
         </>
+      )}
+
+      {hasText && (message.status === "done" || message.status === "stopped") && (
+        <div className="col-start-2 pt-2">
+          <CopyButton message={message} />
+        </div>
       )}
     </article>
   );
