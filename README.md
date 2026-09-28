@@ -44,13 +44,16 @@ app/
   fonts.ts       الخطوط (عربي + لاتيني لكل عائلة مع unicode-range)
 components/
   layout/        الهيدر، الفوتر، التنبيه الثابت، الشعار
-  chat/          شاشة المحادثة: الرسائل، بطاقة المصدر، الـ composer، الحالات
+  chat/          شاشة المحادثة: الرسائل، بطاقات المصادر، الـ composer، الحالات
+  sidebar/       القائمة الجانبية (عمود/Drawer)، إعادة التسمية، تأكيد الحذف
   about/         "كيف يعمل"
   ui/            الأزرار
 lib/
   ai/            ★ AIProvider (العقد) + MockProvider
   store/         ★ ConversationStore (localStorage الآن)
-  chat/          useChat: الإرسال، البث، الإيقاف، إعادة المحاولة، الحفظ
+  chat/          useChat: الإرسال، البث، الإيقاف، إعادة المحاولة، الحفظ، قائمة المحادثات
+  hooks/         useMediaQuery، usePersistentFlag
+  text/          تطبيع النص العربي للبحث
   site.ts        ★ الاسم والتنبيه الثابت
   content/ar.ts  ★ كل نصوص الواجهة
 tests/e2e/       اختبارات Playwright لكل مرحلة

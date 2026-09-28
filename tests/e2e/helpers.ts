@@ -51,9 +51,15 @@ const PRIMARY_RGB = "rgb(30, 58, 95)";
  * يرجع عدد العناصر التي وُصل إليها.
  */
 export async function checkKeyboardFocus(page: Page) {
-  const expected = await page.locator(`${INTERACTIVE}`).evaluateAll(
-    (els) => els.filter((e) => !(e as HTMLButtonElement).disabled).length,
-  );
+  // الظاهرة فقط (display:none لا تُركَّز)، والمفعّلة. العناصر الشفافة (opacity 0)
+  // تُحسب لأنها تظهر عند التركيز. داخل dialog مفتوح: عناصره وحدها قابلة للتركيز.
+  const expected = await page.evaluate((selector) => {
+    const modal = [...document.querySelectorAll("dialog[open]")].at(-1);
+    const scope = modal ?? document;
+    return [...scope.querySelectorAll(selector)].filter(
+      (e) => !(e as HTMLButtonElement).disabled && (e as HTMLElement).checkVisibility(),
+    ).length;
+  }, INTERACTIVE);
   const seen: string[] = [];
   for (let i = 0; i < expected + 3; i++) {
     await page.keyboard.press("Tab");
@@ -94,6 +100,11 @@ export async function checkHover(page: Page) {
   for (let i = 0; i < n; i++) {
     const el = controls.nth(i);
     if (!(await el.isVisible()) || (await el.isDisabled())) continue;
+    const blockedByModal = await el.evaluate((e) => {
+      const modal = [...document.querySelectorAll("dialog[open]")].at(-1);
+      return !!modal && !modal.contains(e);
+    });
+    if (blockedByModal) continue;
     if ((await el.getAttribute("href")) === "#main") continue; // رابط التخطي: مخفي حتى التركيز
     await page.mouse.move(0, 0);
     await page.waitForTimeout(200);
@@ -115,6 +126,7 @@ export async function checkTouchTargets(page: Page) {
   for (let i = 0; i < n; i++) {
     const el = controls.nth(i);
     if (!(await el.isVisible())) continue;
+    if (await el.evaluate((e) => { const m = [...document.querySelectorAll("dialog[open]")].at(-1); return !!m && !m.contains(e); })) continue;
     // رابط التخطي مخفي (sr-only) حتى يُركَّز عليه، فيُقاس في حالته الظاهرة
     if ((await el.getAttribute("href")) === "#main") await el.focus();
     const box = (await el.boundingBox())!;

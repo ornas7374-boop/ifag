@@ -154,3 +154,13 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ── Drawer القائمة الجانبية: ينزلق من اليمين (بداية السطر في RTL) ── */
+@keyframes sanad-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+.sanad-drawer[open] {
+  animation: sanad-drawer-in 200ms ease-out;
+}

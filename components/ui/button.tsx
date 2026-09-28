@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ar } from "@/lib/content/ar";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "md" | "lg";
 
 const base =
@@ -15,6 +15,7 @@ const variants: Record<Variant, string> = {
   secondary:
     "border border-border-strong bg-surface text-text hover:border-primary hover:text-primary",
   ghost: "text-text-muted hover:bg-surface-muted hover:text-text",
+  danger: "bg-danger text-on-primary shadow-sm hover:bg-danger/85",
 };
 
 // كل الأحجام ≥ 44px لمساحة اللمس.

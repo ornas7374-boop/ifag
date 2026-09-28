@@ -30,8 +30,10 @@ async function waitStatus(page: Page, status: string) {
   await expect(lastAssistant(page)).toHaveAttribute("data-status", status, { timeout: 15_000 });
 }
 
+const newChatButton = (page: Page) => page.getByTestId("new-chat").filter({ visible: true }).first();
+
 async function newChat(page: Page) {
-  await page.getByTestId("new-chat").click();
+  await newChatButton(page).click();
   await expect(page.getByTestId("suggestion").first()).toBeVisible();
 }
 
@@ -322,7 +324,7 @@ test("refresh mid-stream recovers the answer as stopped", async ({ page }) => {
 
 test("new chat starts empty and keeps the previous conversation stored", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByTestId("new-chat")).toBeDisabled();
+  await expect(newChatButton(page)).toBeDisabled();
   await ask(page, QUESTION);
   await waitStatus(page, "done");
   await newChat(page);

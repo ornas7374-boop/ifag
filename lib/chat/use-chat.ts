@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AIProviderError, getProvider, type AssistantMessage, type ChatMessage } from "@/lib/ai";
-import { getConversationStore, type Conversation } from "@/lib/store";
+import { getConversationStore, type Conversation, type ConversationSummary } from "@/lib/store";
 
 import { applyStreamEvent } from "./apply-event";
 
@@ -21,6 +21,7 @@ export function useChat() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [status, setStatus] = useState<ChatStatus>("idle");
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
   // نسخة متزامنة من المحادثة الحالية للاستخدام داخل الدوال غير المتزامنة.
   const conversationRef = useRef<Conversation | null>(null);
@@ -34,6 +35,11 @@ export function useChat() {
     setConversation(next);
   }, []);
 
+  /** يعيد قراءة قائمة المحادثات (الأحدث أولًا) من المخزن. */
+  const refreshList = useCallback(async () => {
+    setConversations(await getConversationStore().list());
+  }, []);
+
   // تحميل المحادثة الحالية بعد الـ hydration (localStorage متاح في المتصفح فقط).
   useEffect(() => {
     let cancelled = false;
@@ -41,8 +47,10 @@ export function useChat() {
     (async () => {
       const id = await store.getCurrentId();
       const saved = id ? await store.get(id) : null;
+      const list = await store.list();
       if (cancelled) return;
       commit(saved ? recoverInterrupted(saved) : null);
+      setConversations(list);
       setIsLoaded(true);
     })();
     return () => {
@@ -128,9 +136,10 @@ export function useChat() {
       } finally {
         if (abortRef.current === controller) abortRef.current = null;
         setStatus("idle");
+        void refreshList();
       }
     },
-    [updateAssistant],
+    [updateAssistant, refreshList],
   );
 
   const send = useCallback(
@@ -154,6 +163,7 @@ export function useChat() {
         const store = getConversationStore();
         await store.save(next);
         await store.setCurrentId(next.id);
+        await refreshList();
       } finally {
         // run() يضبط abortRef متزامنًا في أول سطر، فيبقى الإرسال مقفولًا بلا فجوة.
         void run(next.id, assistant.id);
@@ -161,7 +171,7 @@ export function useChat() {
       }
       return true;
     },
-    [commit, run],
+    [commit, run, refreshList],
   );
 
   const stop = useCallback(() => {
@@ -190,7 +200,56 @@ export function useChat() {
     await getConversationStore().setCurrentId(null);
   }, [commit]);
 
+  /** يفتح محادثة محفوظة (ويوقف أي بث جارٍ في غيرها). */
+  const openConversation = useCallback(
+    async (id: string) => {
+      if (conversationRef.current?.id === id) return;
+      abortRef.current?.abort();
+      const store = getConversationStore();
+      const saved = await store.get(id);
+      if (!saved) return void refreshList();
+      commit(recoverInterrupted(saved));
+      await store.setCurrentId(id);
+    },
+    [commit, refreshList],
+  );
+
+  const rename = useCallback(
+    async (id: string, title: string) => {
+      const clean = title.trim().slice(0, TITLE_MAX * 2);
+      if (!clean) return;
+      const store = getConversationStore();
+      const current = conversationRef.current;
+      const target = current?.id === id ? current : await store.get(id);
+      if (!target) return;
+      const next = { ...target, title: clean };
+      if (current?.id === id) commit(next);
+      await store.save(next);
+      await refreshList();
+    },
+    [commit, refreshList],
+  );
+
+  const remove = useCallback(
+    async (id: string) => {
+      const store = getConversationStore();
+      if (conversationRef.current?.id === id) {
+        abortRef.current?.abort();
+        commit(null);
+        await store.setCurrentId(null);
+      }
+      await store.remove(id);
+      await refreshList();
+    },
+    [commit, refreshList],
+  );
+
   return {
+    conversations,
+    currentId: conversation?.id ?? null,
+    openConversation,
+    rename,
+    remove,
     messages: conversation?.messages ?? [],
     status,
     isLoaded,
